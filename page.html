@@ -5,10 +5,21 @@
     </head>
     <body>
 
-        <div id="app-container">
-            <div class="player">Video Player</div>
-            <div class="segments">Text Segments</div>
-            {{ test }}
+        <div id="app-container"> <!-- bound to app -->
+            <!-- ko if: loading -->
+                Loading .....
+            <!-- /ko -->
+            <div data-bind="with: lesson">
+                <h1>Video Player</h1>
+                <div class="player">
+                    <video height="300px" controls="controls" data-bind="attr.src: video_source">
+                    </video>
+                </div>
+                <div class="segments">Text Segments</div>
+            </div>
+            <!-- ko if: error -->
+                <code data-bind="text: error | json:4"></code>
+            <!-- /ko -->
         </div>
 
         <script type="text/javascript">

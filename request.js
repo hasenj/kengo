@@ -94,10 +94,16 @@ define(function(require) {
                 areq.send(json_data);
                 areq.onreadystatechange = function() {
                     if(areq.readyState == areq.DONE) {
+                        try {
+                            var json_response = JSON.parse(areq.responseText);
+                        } catch(e) {
+                            reject({response_text: areq.responseText});
+                            return;
+                        }
                         if(areq.status == 200) {
-                            resolve(areq.response);
+                            resolve(json_response);
                         } else {
-                            reject(areq.response || areq.responseText);
+                            reject(json_response);
                         }
                     }
                 }

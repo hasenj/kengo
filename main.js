@@ -9,12 +9,35 @@ define(function(require) {
 
     var Application = function() {
         var self = this;
-        self.test = "if you see this, binding is ok!";
-        req.get("/remember.json").then(function(data) {
-            console.log("Got data for rememner:", data);
-        });
+        self.lesson = ko.observable(null);
+        self.error = ko.observable(null);
+        self.loading = ko.observable(false);
+
+        self.loadLesson = function(name) {
+            self.loading(true); // XXX find a way to bind loading indicator to a promise?
+            req.get("/" + name + ".json").then(function(data) {
+                self.loading(false);
+                self.error(null);
+                self.lesson(new Lesson(data));
+            }).catch(function(error) {
+                self.loading(false);
+                self.error(error);
+            });
+        }
+
     };
+
+    var Lesson = function(data) {
+        var self = this;
+        // XXX for now assume video ..
+        self.video_source = ko.observable("/" + data.media);
+    };
+
     var app = new Application();
 
     ko.applyBindings(app, document.querySelector('#app-container'));
+
+    // initialize the page with the test lesson
+    app.loadLesson("remember");
+    window.app = app;
 });
