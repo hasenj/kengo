@@ -31,6 +31,7 @@ define(function(require) {
         var self = this;
         // XXX for now assume video ..
         self.video_source = ko.observable("/" + data.media);
+        self.title = ko.observable(data.title);
     };
 
     var app = new Application();
