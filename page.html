@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <title> Interactive Language Notes </title>
+        <script type="text/javascript" src="/require.js"></script>
+    </head>
+    <body>
+
+        <div id="app-container">
+            <div class="player">Video Player</div>
+            <div class="segments">Text Segments</div>
+            {{ test }}
+        </div>
+
+        <script type="text/javascript">
+            require(['rconfig'], function() {
+                require(['main']);
+            });
+        </script>
+    </body>
+</html>
