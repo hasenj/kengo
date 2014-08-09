@@ -94,16 +94,21 @@ define(function(require) {
                 areq.send(json_data);
                 areq.onreadystatechange = function() {
                     if(areq.readyState == areq.DONE) {
-                        try {
-                            var json_response = JSON.parse(areq.responseText);
-                        } catch(e) {
-                            reject({response_text: areq.responseText});
-                            return;
-                        }
                         if(areq.status == 200) {
+                            try {
+                                var json_response = JSON.parse(areq.responseText);
+                            } catch(e) {
+                                reject({message: "invalid json. see error.response_text", response_text: areq.responseText});
+                                return;
+                            }
                             resolve(json_response);
                         } else {
-                            reject(json_response);
+                            try {
+                                var response = JSON.parse(areq.responseText);
+                            } catch(e) {
+                                response = areq.responseText;
+                            }
+                            reject({message: areq.statusText, response: response});
                         }
                     }
                 }

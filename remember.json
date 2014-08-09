@@ -1,10 +1,10 @@
 {
     "media": "remember.webm",
-    "text-language": "japanese",
-    "user-language": "arabic",
+    "text_language": "japanese",
+    "user_language": "arabic",
     "title": "H&MC: REMEMBER",
 
-    "text-segments": [
+    "text_segments": [
     {
         "time": "00:09",
         "text": "信じ始めたその時をただ　信じ続けていてほしくて　泣いたんだ\n 忘れないでよ　Remember Dream"
@@ -12,7 +12,7 @@
 
     {
         "time": "00:33",
-        "text": "追いかけた時を忘れて遠ざかる　出会いさえ\n"
+        "text": "追いかけた時を忘【わす】れて遠ざかる　出会いさえ\n"
     },
 
     {

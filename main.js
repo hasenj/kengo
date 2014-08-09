@@ -20,18 +20,47 @@ define(function(require) {
                 self.error(null);
                 self.lesson(new Lesson(data));
             }).catch(function(error) {
+                self.lesson(null);
                 self.loading(false);
-                self.error(error);
+                self.error(error.message);
             });
         }
 
     };
+
+    // proxy
+    // useful for passing constructors to u.map
+    var ctor_fn = function(ctor) {
+        return function() {
+            var object = Object.create(ctor.prototype);
+            ctor.apply(object, arguments);
+            return object;
+        }
+    }
 
     var Lesson = function(data) {
         var self = this;
         // XXX for now assume video ..
         self.video_source = ko.observable("/" + data.media);
         self.title = ko.observable(data.title);
+
+        var lesson = self;
+        var Section = function(data) { // ctor
+            var self = this;
+            self.time = ko.observable(data.time); // XXX parse the time!
+            self.text = ko.observable(data.text);
+
+            var section = self;
+            var SectionNote = function(data) { // ctor
+                var self = this;
+                self.text = ko.observable(data);
+            }
+
+            self.notes = ko.observableArray(u.map(data.notes, ctor_fn(SectionNote)));
+        }
+
+        self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
+        self.current_section = ko.observable(null);
     };
 
     var app = new Application();

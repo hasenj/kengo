@@ -15,7 +15,9 @@
                     <video height="300px" controls="controls" data-bind="attr.src: video_source">
                     </video>
                 </div>
-                <div class="segments">Text Segments</div>
+                <div class="segments" data-bind="foreach: sections">
+                    <p data-bind="text: text"></p>
+                </div>
             </div>
             <!-- ko if: error -->
                 <code data-bind="text: error | json:4"></code>
