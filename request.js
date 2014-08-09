@@ -132,28 +132,31 @@ define(function(require) {
     }
 
     // helpers to quickly get a promise ...
-    JsonRequest.request = function(method, path, data) {
+    JsonRequest.request = function(method, path, params, data) {
         var req = new JsonRequest(method, path);
+        if(params) {
+            req.params(params);
+        }
         if(data) {
             req.data(data);
         }
         return req.send();
     }
 
-    JsonRequest.get = function(path, data) {
-        return JsonRequest.request("get", path, data);
+    JsonRequest.get = function(path, params) {
+        return JsonRequest.request("get", path, params);
     }
 
     JsonRequest.post = function(path, data) {
-        return JsonRequest.request("post", path, data);
+        return JsonRequest.request("post", path, {}, data);
     }
 
     JsonRequest.put = function(path, data) {
-        return JsonRequest.request("put", path, data);
+        return JsonRequest.request("put", path, {}, data);
     }
 
     JsonRequest.del = function(path, data) {
-        return JsonRequest.request("delete", path, data);
+        return JsonRequest.request("delete", path, {}, data);
     }
 
     return JsonRequest;
