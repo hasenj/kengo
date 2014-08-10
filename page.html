@@ -12,7 +12,7 @@
             <div data-bind="with: lesson">
                 <h1 data-bind="text: title"></h1>
                 <div class="player">
-                    <video height="300px" controls="controls" data-bind="attr.src: video_source">
+                    <video height="300px" controls="controls" data-bind="attr.src: video_source, element: video_element">
                     </video>
                 </div>
                 <div class="segments" data-bind="foreach: sections">

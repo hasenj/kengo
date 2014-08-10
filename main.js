@@ -4,6 +4,8 @@ define(function(require) {
     require('knockout.punches');
     ko.punches.enableAll();
 
+    require('kobindings');
+
     var u = require('lodash');
     var req = require('request');
 
@@ -38,11 +40,34 @@ define(function(require) {
         }
     }
 
+    // a function to return a promise for when an observable become non-undefined and non-null
+    // but without guarantee that it won't become undefined or null again!
+    var after_init = function(observable) {
+        return new Promise(function(resolve, reject) {
+            var value = observable();
+            if(typeof value !== "undefined" && value !== null) {
+                resolve(true);
+            } else {
+                var sub = observable.subscribe(function(value) {
+                    if(typeof value !== "undefined" && value !== null) {
+                        sub.dispose();
+                        resolve(true);
+                    }
+                });
+            }
+        });
+    }
+
     var Lesson = function(data) {
         var self = this;
         // XXX for now assume video ..
         self.video_source = ko.observable("/" + data.media);
         self.title = ko.observable(data.title);
+
+        self.video_element = ko.observable();
+        after_init(self.video_element).then(function() {
+            console.log("Video Element has initialized");
+        });
 
         var lesson = self;
         var Section = function(data) { // ctor
@@ -64,10 +89,10 @@ define(function(require) {
     };
 
     var app = new Application();
+    window.app = app;
 
     ko.applyBindings(app, document.querySelector('#app-container'));
 
     // initialize the page with the test lesson
     app.loadLesson("remember");
-    window.app = app;
 });
