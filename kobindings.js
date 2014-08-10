@@ -6,10 +6,10 @@ define(function(require) {
     ko.bindingHandlers.element = {
         init: function (element, valueAccessor) {
             var target = valueAccessor();
-            if (ko.isObservable(target)) {
+            try {
                 target(element);
-            } else {
-                throw "element binding not used properly";
+            } catch(e) {
+                console.error("element binding not used properly: target setting failed with error:\n", e);
             }
         }
     };

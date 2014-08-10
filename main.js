@@ -40,16 +40,37 @@ define(function(require) {
         }
     }
 
+    var is_initialized = function(value) {
+        return (typeof value !== "undefined" && value !== null);
+    }
+
+    // similar to observable, but can't be changed once initialized!
+    var constant = function(init) {
+        var value = ko.observable(init);
+        return ko.computed({
+            read: function() {
+                return value();
+            },
+            write: function(nv) {
+                if(is_initialized(value())) {
+                    throw "Can't initialize constant twice!";
+                } else {
+                    value(nv);
+                }
+            }
+        });
+    }
+
     // a function to return a promise for when an observable become non-undefined and non-null
     // but without guarantee that it won't become undefined or null again!
     var after_init = function(observable) {
         return new Promise(function(resolve, reject) {
             var value = observable();
-            if(typeof value !== "undefined" && value !== null) {
+            if(is_initialized(value)) {
                 resolve(true);
             } else {
                 var sub = observable.subscribe(function(value) {
-                    if(typeof value !== "undefined" && value !== null) {
+                    if(is_initialized(value)) {
                         sub.dispose();
                         resolve(true);
                     }
@@ -64,7 +85,7 @@ define(function(require) {
         self.video_source = ko.observable("/" + data.media);
         self.title = ko.observable(data.title);
 
-        self.video_element = ko.observable();
+        self.video_element = constant(null);
         after_init(self.video_element).then(function() {
             console.log("Video Element has initialized");
         });
