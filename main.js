@@ -133,11 +133,20 @@ define(function(require) {
 
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
         // find the last section whose time is <= currentTime
-        self.current_section = ko.computed(function() {
+        self.video_current_section = ko.computed(function() {
             var currentTime = self.currentTime();
             return u.findLast(self.sections(), function(section) {
                 return section.time() <= currentTime;
             });
+        });
+        self.user_current_section = ko.observable(null);
+        self.use_video_section = ko.observable(true);
+        self.current_section = ko.computed(function() {
+            if(self.use_video_section()) {
+                return self.video_current_section();
+            } else {
+                return self.user_current_section();
+            }
         });
     };
 
