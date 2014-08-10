@@ -19,7 +19,14 @@
                     <code> Video Position: {{ currentTime }} </code>
                 </p>
                 <div data-bind="with: current_section">
-                    {{ text }}
+                    <div>
+                        {{ text }}
+                    </div>
+                    <div data-bind="foreach: notes">
+                        <div>
+                            {{ text }}
+                        </div>
+                    </div>
                 </div>
                 <div class="segments" data-bind="foreach: sections">
                     <p>
