@@ -1,6 +1,9 @@
 <html>
     <head>
         <title> Interactive Language Notes </title>
+
+        <link rel="stylesheet" type="text/css" href="/styles.css" />
+
         <script type="text/javascript" src="/require.js"></script>
     </head>
     <body>
@@ -18,7 +21,7 @@
                 <p>
                     <code> Video Position: {{ currentTime }} </code>
                 </p>
-                <div data-bind="with: current_section">
+                <div class="current_notes" data-bind="with: current_section">
                     <div>
                         {{ text }}
                     </div>
@@ -28,14 +31,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="segments" data-bind="foreach: sections">
-                    <p data-bind="click: click">
-                        <code> {{ time }}: </code>
-                        <!-- ko if: $parent.current_section() == $data -->
-                            -> 
-                        <!-- /ko -->
-                        {{ text }}
-                    </p>
+                <div class="sections" data-bind="foreach: sections">
+                    <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
+                        <p>
+                            <code> {{ time }}: </code>
+                            {{ text }}
+                        </p>
+                    </div>
                 </div>
             </div>
             <!-- ko if: error -->
