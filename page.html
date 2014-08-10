@@ -15,8 +15,20 @@
                     <video height="300px" controls="controls" data-bind="attr.src: video_source, element: video_element">
                     </video>
                 </div>
+                <p>
+                    <code> Video Position: {{ currentTime }} </code>
+                </p>
+                <div data-bind="with: current_section">
+                    {{ text }}
+                </div>
                 <div class="segments" data-bind="foreach: sections">
-                    <p data-bind="text: text"></p>
+                    <p>
+                        <code> {{ time }}: </code>
+                        <!-- ko if: $parent.current_section() == $data -->
+                            -> 
+                        <!-- /ko -->
+                        {{ text }}
+                    </p>
                 </div>
             </div>
             <!-- ko if: error -->

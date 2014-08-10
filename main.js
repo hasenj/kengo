@@ -79,6 +79,22 @@ define(function(require) {
         });
     }
 
+    // parse a mm:ss.xx type of timestamp into a number that represents seconds
+    // rules:
+    //  mm:ss is interpreted so that mm is minutes and ss is seconds. ss can contain a dot, i.e. ss.xx
+    //  if there's no mm: then the number is interprested as seconds
+    // also: assumes "ts" is a string, not a number
+    var parse_ts = function(ts) {
+        if(ts.indexOf(":") == -1) {
+            return Number(ts);
+        } else {
+            var parts = ts.split(":");
+            var mm = parts.shift();
+            var ss = parts.shift();
+            return Number(mm) * 60 + Number(ss);
+        }
+    }
+
     var Lesson = function(data) {
         var self = this;
         // XXX for now assume video ..
@@ -86,14 +102,24 @@ define(function(require) {
         self.title = ko.observable(data.title);
 
         self.video_element = constant(null);
+        self.currentTime = ko.observable(null);
         after_init(self.video_element).then(function() {
+            var element = self.video_element();
             console.log("Video Element has initialized");
+            var ts_interval = setInterval(function() {
+                self.currentTime(element.currentTime);
+            }, 100);
+            // clear this interval when the element is gone
+            ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                console.info("Clearing video tracking interval!");
+                clearInterval(ts_interval);
+            });
         });
 
         var lesson = self;
         var Section = function(data) { // ctor
             var self = this;
-            self.time = ko.observable(data.time); // XXX parse the time!
+            self.time = ko.observable(parse_ts(data.time));
             self.text = ko.observable(data.text);
 
             var section = self;
@@ -106,7 +132,13 @@ define(function(require) {
         }
 
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
-        self.current_section = ko.observable(null);
+        // find the last section whose time is <= currentTime
+        self.current_section = ko.computed(function() {
+            var currentTime = self.currentTime();
+            return u.findLast(self.sections(), function(section) {
+                return section.time() <= currentTime;
+            });
+        });
     };
 
     var app = new Application();
