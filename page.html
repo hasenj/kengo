@@ -26,6 +26,7 @@
                             <code> Video Position: {{ currentTime | as_timestamp }} </code>
                         </p>
                         <div class="controls">
+                            <button data-bind="click: video_back_peek, enable: video_paused">Back-Peek</button>
                             <button data-bind="click: video_peek, enable: video_paused">Peek</button>
                             <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
                             <button data-bind="click: backward_small, enable: video_paused"> <= </button>

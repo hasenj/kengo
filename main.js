@@ -178,9 +178,18 @@ define(function(require) {
             });
         });
 
+        // see what starts here
         self.video_peek = function() {
             self.video_peek_mode(true);
-            self.video_stop_time(self.currentTime() + 1.5);
+            self.video_stop_time(self.currentTime() + 0.8);
+            self.video_element().play();
+        }
+
+        // see what ends here
+        self.video_back_peek = function() {
+            self.video_peek_mode(true);
+            self.video_stop_time(self.currentTime());
+            self.video_element().currentTime = self.currentTime() - 0.8;
             self.video_element().play();
         }
 
