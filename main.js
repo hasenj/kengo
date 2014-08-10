@@ -220,9 +220,19 @@ define(function(require) {
             // when a user clicks section, seek video to its time
             self.click = function() {
                 if(is_initialized(lesson.video_element)) {
+                    // if the video is paused, and user selects a section, turn on manual section mode and choose this one
+                    if(lesson.video_paused()) {
+                        lesson.use_video_section(false);
+                    }
+                    lesson.user_current_section(self);
                     lesson.video_element().currentTime = self.time();
                 }
             }
+        }
+
+        // XXX odd naming ..
+        self.follow_video = function() {
+            self.use_video_section(true);
         }
 
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
