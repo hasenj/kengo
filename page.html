@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <div class="segments" data-bind="foreach: sections">
-                    <p>
+                    <p data-bind="click: click">
                         <code> {{ time }}: </code>
                         <!-- ko if: $parent.current_section() == $data -->
                             -> 

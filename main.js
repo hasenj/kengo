@@ -129,6 +129,13 @@ define(function(require) {
             }
 
             self.notes = ko.observableArray(u.map(data.notes, ctor_fn(SectionNote)));
+
+            // when a user clicks section, seek video to its time
+            self.click = function() {
+                if(is_initialized(lesson.video_element)) {
+                    lesson.video_element().currentTime = self.time();
+                }
+            }
         }
 
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
