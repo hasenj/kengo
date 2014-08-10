@@ -1,8 +1,11 @@
+<!doctype html>
 <html>
     <head>
         <title> Interactive Language Notes </title>
 
-        <link rel="stylesheet" type="text/css" href="/styles.css" />
+        <link rel="stylesheet/less" type="text/css" href="/layout.less" />
+        <link rel="stylesheet/less" type="text/css" href="/styles.less" />
+        <script type="text/javascript" src="/less.js"></script>
 
         <script type="text/javascript" src="/require.js"></script>
     </head>
@@ -12,33 +15,41 @@
             <!-- ko if: loading -->
                 Loading .....
             <!-- /ko -->
-            <div data-bind="with: lesson">
-                <h1 data-bind="text: title"></h1>
-                <div class="player">
-                    <video height="300px" controls="controls" data-bind="attr.src: video_source, element: video_element">
-                    </video>
-                </div>
-                <p>
-                    <code> Video Position: {{ currentTime }} </code>
-                </p>
-                <div class="current_notes" data-bind="with: current_section">
-                    <div>
-                        {{ text }}
+            <div class="lesson" data-bind="with: lesson">
+                <div class="lesson_side">
+                    <div class="player">
+                        <h1 data-bind="text: title"></h1>
+
+                        <video height="300px" controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
+
+                        <p>
+                            <code> Video Position: {{ currentTime }} </code>
+                        </p>
                     </div>
-                    <div data-bind="foreach: notes">
-                        <div>
-                            {{ text }}
+
+                    <div class="sections" data-bind="foreach: sections">
+                        <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
+                            <p>
+                                <code> {{ time }}: </code>
+                                {{ text }}
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div class="sections" data-bind="foreach: sections">
-                    <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
-                        <p>
-                            <code> {{ time }}: </code>
+
+                <div class="notes_side">
+                    <div class="current_notes" data-bind="with: current_section">
+                        <div class="text">
                             {{ text }}
-                        </p>
+                        </div>
+                        <div class="notes" data-bind="foreach: notes">
+                            <div class="note">
+                                {{ text }}
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>
             <!-- ko if: error -->
                 <code data-bind="text: error | json:4"></code>
