@@ -25,6 +25,9 @@
                         <p>
                             <code> Video Position: {{ currentTime | as_timestamp }} </code>
                         </p>
+                        <div class="controls">
+                            <button data-bind="click: video_peek, enable: video_paused">Peek</button>
+                        </div>
                     </div>
 
                     <div class="sections" data-bind="foreach: sections">

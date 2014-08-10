@@ -122,11 +122,54 @@ define(function(require) {
 
         self.video_element = constant(null);
         self.currentTime = ko.observable(null);
+        self.video_peek_mode = ko.observable(false);
+        self.video_stop_time = ko.observable(null);
+        self.video_controls = ko.computed(function() {
+            if(self.video_peek_mode()) {
+                return false;
+            }
+            return true;
+        });
+        self.video_paused = ko.observable(true);
+        self.video_playing = ko.computed(function() {
+            return !self.video_paused();
+        });
+
+        // video management .. "think" function for video player
         after_init(self.video_element).then(function() {
             var element = self.video_element();
             console.log("Video Element has initialized");
+
+            ko.computed(function() {
+                element.controls = self.video_controls();
+            }, this, { disposeWhenNodeIsRemoved: element });
+
+            // keep the playing observable in sync with the player
+            var sync_paused_status = function() {
+                self.video_paused(element.paused)
+            }
+            element.addEventListener("playing", sync_paused_status);
+            element.addEventListener("play", sync_paused_status);
+            element.addEventListener("pause", sync_paused_status);
+            element.addEventListener("ended", sync_paused_status);
+            element.addEventListener("seeked", sync_paused_status);
+            sync_paused_status();
+
             var ts_interval = setInterval(function() {
-                self.currentTime(element.currentTime);
+                if(!self.video_peek_mode()) {
+                    self.currentTime(element.currentTime);
+                }
+                if(self.video_stop_time()) {
+                    if(element.currentTime >= self.video_stop_time()) {
+                        element.pause();
+                        self.video_stop_time(null);
+                        // end peek mode if it was one
+                        if(self.video_peek_mode()) {
+                            self.video_peek_mode(false);
+                            element.currentTime = self.currentTime();
+                        }
+                    }
+                }
             }, 100);
             // clear this interval when the element is gone
             ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
@@ -134,6 +177,12 @@ define(function(require) {
                 clearInterval(ts_interval);
             });
         });
+
+        self.video_peek = function() {
+            self.video_peek_mode(true);
+            self.video_stop_time(self.currentTime() + 1.5);
+            self.video_element().play();
+        }
 
         var lesson = self;
         var Section = function(data) { // ctor
