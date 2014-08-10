@@ -79,6 +79,13 @@ define(function(require) {
         });
     }
 
+    // from http://stackoverflow.com/a/10073788/35364
+    function pad(n, width, z) {
+        z = z || '0';
+        n = n + '';
+        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    }
+
     // parse a mm:ss.xx type of timestamp into a number that represents seconds
     // rules:
     //  mm:ss is interpreted so that mm is minutes and ss is seconds. ss can contain a dot, i.e. ss.xx
@@ -93,6 +100,18 @@ define(function(require) {
             var ss = parts.shift();
             return Number(mm) * 60 + Number(ss);
         }
+    }
+
+    // display seconds (number) as a mm:ss.xxx timestamp
+    var as_ts = function(time) {
+        var minutes = Math.floor(time / 60);
+        var seconds = Math.floor(time % 60);
+        var ms = time - Math.floor(time);
+        return "" + pad(minutes, 2) + ":" + pad(seconds, 2) + "." + ms.toFixed(3).slice(2);
+    }
+
+    ko.filters.as_timestamp = function(seconds) {
+        return as_ts(ko.unwrap(seconds));
     }
 
     var Lesson = function(data) {

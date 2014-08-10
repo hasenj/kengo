@@ -23,14 +23,14 @@
                         <video height="300px" controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
 
                         <p>
-                            <code> Video Position: {{ currentTime }} </code>
+                            <code> Video Position: {{ currentTime | as_timestamp }} </code>
                         </p>
                     </div>
 
                     <div class="sections" data-bind="foreach: sections">
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
                             <p>
-                                <code> {{ time }}: </code>
+                                <code> {{ time | as_timestamp }}: </code>
                                 {{ text }}
                             </p>
                         </div>
