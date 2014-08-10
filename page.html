@@ -27,6 +27,11 @@
                         </p>
                         <div class="controls">
                             <button data-bind="click: video_peek, enable: video_paused">Peek</button>
+                            <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
+                            <button data-bind="click: backward_small, enable: video_paused"> <= </button>
+                            <button data-bind="click: forward_small, enable: video_paused"> => </button>
+                            <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
+                            <button data-bind="click: set_section_time_from_video, enable: video_paused">Start From Video Time</button>
                         </div>
                     </div>
 

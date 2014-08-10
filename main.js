@@ -184,6 +184,25 @@ define(function(require) {
             self.video_element().play();
         }
 
+        self.forward_smaller = function() {
+            self.video_element().currentTime = self.currentTime() + 0.1;
+        }
+        self.forward_small = function() {
+            self.video_element().currentTime = self.currentTime() + 0.5;
+        }
+        self.backward_small = function() {
+            self.video_element().currentTime = self.currentTime() - 0.5;
+        }
+        self.backward_smaller = function() {
+            self.video_element().currentTime = self.currentTime() - 0.1;
+        }
+
+        self.set_section_time_from_video = function() {
+            var section = self.current_section();
+            if(!section) { return; }
+            section.time(self.currentTime());
+        }
+
         var lesson = self;
         var Section = function(data) { // ctor
             var self = this;
