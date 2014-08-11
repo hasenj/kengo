@@ -114,6 +114,15 @@ define(function(require) {
         return as_ts(ko.unwrap(seconds));
     }
 
+    /**
+        json fields:
+
+            "media": url for media
+            "text_language": e.g. "japanese",
+            "user_language": e.g. "arabic",
+            "title": arbitrary string, lesson title
+            "text_segments": list of sections. see Section ctor below
+     */
     var Lesson = function(data) {
         var self = this;
         // XXX for now assume video ..
@@ -213,15 +222,30 @@ define(function(require) {
         }
 
         var lesson = self;
+        /**
+            json fields:
+
+                time: time stamp, e.g. 11:23.2
+                text: string
+                notes: list of strings (optional)
+         */
         var Section = function(data) { // ctor
             var self = this;
             self.time = ko.observable(parse_ts(data.time));
             self.text = ko.observable(data.text);
 
             var section = self;
+            /**
+                json format: string; plain text!
+             */
             var SectionNote = function(data) { // ctor
                 var self = this;
                 self.text = ko.observable(data);
+
+                // SectionNote.export_data
+                self.export_data = function() {
+                    return self.text();
+                }
             }
 
             self.notes = ko.observableArray(u.map(data.notes, ctor_fn(SectionNote)));
@@ -236,6 +260,15 @@ define(function(require) {
                     lesson.user_current_section(self);
                     lesson.video_element().currentTime = self.time();
                 }
+            }
+
+            // Section.export_data
+            self.export_data = function() {
+                var out = {};
+                out.time = as_ts(self.time());
+                out.text = self.text();
+                out.notes = u.invoke(self.notes(), 'export_data');
+                return out;
             }
         }
 
@@ -261,6 +294,17 @@ define(function(require) {
                 return self.user_current_section();
             }
         });
+
+        // Lesson.export_data
+        self.export_data = function() {
+            var out = {};
+            out.media = data.media; // as-is
+            out.text_language = data.text_language;
+            out.user_language = data.user_language;
+            out.title = self.title();
+            out.text_segments = u.invoke(self.sections(), 'export_data');
+            return out;
+        }
     };
 
     var app = new Application();
