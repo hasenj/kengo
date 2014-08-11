@@ -32,8 +32,10 @@
                             <button data-bind="click: backward_small, enable: video_paused"> <= </button>
                             <button data-bind="click: forward_small, enable: video_paused"> => </button>
                             <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
-                            <button data-bind="click: set_section_time_from_video, enable: video_paused">Start From Video Time</button>
                             <button data-bind="click: follow_video, disable: use_video_section">Follow Video</button>
+                            <button data-bind="click: use_next_section, enable: next_section">Next Segment</button>
+                            <button data-bind="click: use_prev_section, enable: prev_section">Prev Segment</button>
+
                         </div>
                     </div>
 
@@ -51,6 +53,11 @@
                     <div class="current_notes" data-bind="with: current_section">
                         <div class="text">
                             {{ text }}
+                        </div>
+                        <div class="controls">
+                            <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
+                            <button data-bind="click: jump_video_to_start"> |< </button>
+                            <button data-bind="click: play_section_only, enable: lesson.video_paused"> [>] </button>
                         </div>
                         <div class="notes" data-bind="foreach: notes">
                             <div class="note">

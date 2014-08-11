@@ -133,7 +133,7 @@ define(function(require) {
         self.currentTime = ko.observable(null);
         self.video_peek_mode = ko.observable(false);
         self.video_stop_time = ko.observable(null);
-        self.video_controls = ko.computed(function() {
+        self.use_video_controls = ko.computed(function() {
             if(self.video_peek_mode()) {
                 return false;
             }
@@ -144,18 +144,25 @@ define(function(require) {
             return !self.video_paused();
         });
 
+        self.video_seek = function(time) {
+            self.video_element().currentTime = time;
+        }
+        self.video_play = function() {
+            self.video_element().play();
+        }
+
         // video management .. "think" function for video player
         after_init(self.video_element).then(function() {
             var element = self.video_element();
             console.log("Video Element has initialized");
 
             ko.computed(function() {
-                element.controls = self.video_controls();
+                element.controls = self.use_video_controls();
             }, this, { disposeWhenNodeIsRemoved: element });
 
             // keep the playing observable in sync with the player
             var sync_paused_status = function() {
-                self.video_paused(element.paused)
+                self.video_paused(element.paused || self.video_peek_mode())
             }
             element.addEventListener("playing", sync_paused_status);
             element.addEventListener("play", sync_paused_status);
@@ -164,6 +171,14 @@ define(function(require) {
             element.addEventListener("seeked", sync_paused_status);
             sync_paused_status();
 
+            var cleanup_loop_modes = function() {
+                self.video_stop_time(null);
+                self.video_peek_mode(false);
+            }
+            element.addEventListener("pause", cleanup_loop_modes);
+            element.addEventListener("seeked", cleanup_loop_modes);
+            element.addEventListener("ended", cleanup_loop_modes);
+
             var ts_interval = setInterval(function() {
                 if(!self.video_peek_mode()) {
                     self.currentTime(element.currentTime);
@@ -171,7 +186,10 @@ define(function(require) {
                 if(self.video_stop_time()) {
                     if(element.currentTime >= self.video_stop_time()) {
                         element.pause();
-                        self.video_stop_time(null);
+                        // cleaning up the stop time is done elsewhere (in
+                        // response to pausing, etc) so we don't have to worry
+                        // about it here
+
                         // end peek mode if it was one
                         if(self.video_peek_mode()) {
                             self.video_peek_mode(false);
@@ -198,7 +216,7 @@ define(function(require) {
         self.video_back_peek = function() {
             self.video_peek_mode(true);
             self.video_stop_time(self.currentTime());
-            self.video_element().currentTime = self.currentTime() - 0.8;
+            self.video_seek(self.currentTime() - 0.8);
             self.video_element().play();
         }
 
@@ -215,12 +233,6 @@ define(function(require) {
             self.video_element().currentTime = self.currentTime() - 0.1;
         }
 
-        self.set_section_time_from_video = function() {
-            var section = self.current_section();
-            if(!section) { return; }
-            section.time(self.currentTime());
-        }
-
         var lesson = self;
         /**
             json fields:
@@ -233,6 +245,8 @@ define(function(require) {
             var self = this;
             self.time = ko.observable(parse_ts(data.time));
             self.text = ko.observable(data.text);
+
+            self.lesson = lesson; // for templates (views)
 
             var section = self;
             /**
@@ -252,15 +266,25 @@ define(function(require) {
 
             // when a user clicks section, seek video to its time
             self.click = function() {
-                if(is_initialized(lesson.video_element)) {
-                    // if the video is paused, and user selects a section, turn on manual section mode and choose this one
-                    if(lesson.video_paused()) {
-                        lesson.use_video_section(false);
-                    }
-                    lesson.user_current_section(self);
-                    lesson.video_element().currentTime = self.time();
-                }
+                lesson.jump_to_section(self);
             }
+
+
+            self.use_video_time = function() {
+                self.time(lesson.currentTime());
+            }
+            self.jump_video_to_start = function() {
+                lesson.video_seek(self.time());
+            }
+            self.play_section_only = function() {
+                lesson.video_seek(self.time());
+                var next = lesson.find_next_section(self);
+                if(next) {
+                    lesson.video_stop_time(next.time());
+                }
+                lesson.video_play();
+            }
+
 
             // Section.export_data
             self.export_data = function() {
@@ -278,6 +302,11 @@ define(function(require) {
         self.follow_video = function() {
             self.use_video_section(true);
         }
+        self.video_playing.subscribe(function(yes) {
+            if(yes) {
+                self.use_video_section(true);
+            }
+        });
 
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
         // find the last section whose time is <= currentTime
@@ -296,6 +325,60 @@ define(function(require) {
                 return self.user_current_section();
             }
         });
+
+        // find section after given one
+        self.find_next_section = function(section) {
+            if(!section) { return null; }
+            var index = u.findIndex(self.sections(), section);
+            if(index == -1) { return null; };
+            if( (index + 1) < self.sections().length ) {
+                return self.sections()[index + 1];
+            } else {
+                return null;
+            }
+        }
+        // find section preceeding given one
+        self.find_prev_section = function(section) {
+            if(!section) { return null; }
+            var index = u.findIndex(self.sections(), section);
+            if(index == -1) { return null };
+            if(index > 0) {
+                return self.sections()[index - 1];
+            } else {
+                return null;
+            }
+        }
+
+        self.jump_to_section = function(section) {
+            if(is_initialized(self.video_element)) {
+                // if the video is paused, and user selects a section, turn on manual section mode and choose this one
+                if(self.video_paused()) {
+                    self.use_video_section(false);
+                }
+                self.user_current_section(section);
+                self.video_seek(section.time());
+            }
+        }
+
+        self.next_section = ko.computed(function() {
+            return self.find_next_section(self.current_section());
+        });
+        self.prev_section = ko.computed(function() {
+            return self.find_prev_section(self.current_section());
+        });
+
+        self.use_next_section = function() {
+            var section = self.next_section();
+            if(section) {
+                self.jump_to_section(section);
+            }
+        }
+        self.use_prev_section = function() {
+            var section = self.prev_section();
+            if(section) {
+                self.jump_to_section(section);
+            }
+        }
 
         // Lesson.export_data
         self.export_data = function() {
