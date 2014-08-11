@@ -286,6 +286,10 @@ define(function(require) {
             self.player.paused.subscribe(sync_paused);
             sync_paused(self.player.paused());
 
+            // hide controls in video peek mode!
+            ko.computed(function() {
+                self.player.show_controls(!self.video_peek_mode());
+            });
         });
 
         var player_peek = function(start, end, reset) {
