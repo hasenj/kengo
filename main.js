@@ -188,10 +188,10 @@ define(function(require) {
         element.addEventListener("seeked", relay_event);
         element.addEventListener("ended", relay_event);
 
-        // returns a promise that gets fulfilled after the player has sent both "playing" and "seeked" events
-        self.playing_promise = function() {
+        // returns a promise that gets fulfilled after the player has sent all events in params
+        self.wait_for_events = function() {
+            var waiting_for = Array.prototype.slice.call(arguments);
             return new Promise(function(resolve, reject) {
-                var waiting_for = ["playing", "seeked"];
                 var sub = self.event_proxy.subscribe(function(ev) {
                     console.log("[PP] Event:", ev.type, "Time:", ev.ts);
                     u.pull(waiting_for, ev.type);
@@ -211,7 +211,7 @@ define(function(require) {
         player.play();
         return new Promise(function(resolve, reject) {
             // wait for the playing event, then start listening to one of "seeked ended paused" event
-            player.playing_promise().then(function() {
+            player.wait_for_events("playing", "seeked").then(function() {
                 // XXX there must be a better way to know if the promise has been fulfilled or not!
                 var done = false; // keep track if we're done before trying to reject!
                 var time_sub = player.time.subscribe(function(time) {
@@ -223,8 +223,11 @@ define(function(require) {
                         done = true;
                         player.pause();
                         player.seek(reset_to_time);
-                        resolve(true);
                         time_sub.dispose();
+                        // waiting for seeking to finish before resolving
+                        player.wait_for_events("seeked").then(function() {
+                            resolve(true);
+                        });
                     }
                 });
                 var interruption_sub = player.event_proxy.subscribe(function(ev) {
@@ -324,10 +327,11 @@ define(function(require) {
 
         self.play_segment = function(start, end) {
             var reset = start;
-            player_play_segment(self.player, start, end, reset).then(function(){
+            return player_play_segment(self.player, start, end, reset).then(function(){
                 console.log("Segment play done!");
             }).catch(function(error) {
                 console.log("Segment play interrupted!", error);
+                throw error;
             });
         }
 
