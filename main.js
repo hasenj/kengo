@@ -281,7 +281,9 @@ define(function(require) {
 
             self.player.playing.subscribe(function(yes) {
                 if(yes) {
-                    self.use_video_section(true);
+                    if(!self.video_peek_mode()) {
+                        self.use_video_section(true);
+                    }
                 }
             });
 
@@ -397,11 +399,34 @@ define(function(require) {
                 var end;
                 var next = lesson.find_next_section(self);
                 if(next) {
-                    end = next.time() - 0.1; // small offset to prevent from selecting next section!
+                    end = next.time();
                 } else {
                     end = lesson.player.duration();
                 }
-                lesson.play_segment(start, end);
+                var original_use_video_section = lesson.use_video_section();
+                // Prevent selecting next section at the end by turning off video following.
+                // We have to do it this way because usually playing a video turns on the 'use_video_section', so we want to only
+                // turn it off after it gets turned on by the other listener!
+                // but this could be problamatic if we're playing a section so small .. smaller than 0.3 seconds
+                // so doing a sanity check is a good idea
+                if(end - start > 0.3) {
+                    var sub = lesson.player.playing.subscribe(function(yes) {
+                        if(yes) {
+                            sub.dispose();
+                            setTimeout(function() {
+                                lesson.use_video_section(false);
+                            }, 10);
+                        }
+                    });
+                }
+                lesson.play_segment(start, end).then(function(){
+                    console.log("Section play done!");
+                    lesson.use_video_section(original_use_video_section);
+                }).catch(function(error) {
+                    console.log("Section play interrupted!", error);
+                    lesson.use_video_section(original_use_video_section);
+                    throw error
+                });
             }
 
             // Section.export_data
