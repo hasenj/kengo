@@ -167,7 +167,7 @@ define(function(require) {
             clearInterval(ts_interval);
         });
 
-        // replay events in a more simpler way
+        // relay events in a more simpler way
         // event_proxy is a subscribable (ko), when you subscribe to it, you get events in the following format:
         //     {
         //         ts: timestamp (mostly for uniquness .. you can ignore)
@@ -204,7 +204,12 @@ define(function(require) {
         }
     }
 
-    // returns a promise that's fulfilled when we reach the end time, or rejected if we get interrupted before we reach it!
+    /**
+        Play from start_time to end_time, and when done, seek the player to reset_to_time
+
+        Returns a promise that's fulfilled when we're done, or rejected if we get interrupted before we reach it!
+            done meaning: we reached the end time, and seeked to reset_to_time
+     */
     var player_play_segment = function(player, start_time, end_time, reset_to_time) {
         player.pause();
         player.seek(start_time);
