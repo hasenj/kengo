@@ -39,12 +39,17 @@
                         </div>
                     </div>
 
-                    <div class="sections" data-bind="foreach: sections">
+                    <div class="sections">
+                        <!-- ko foreach: sections -->
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
                             <p>
                                 <code> {{ time | as_timestamp }}: </code>
                                 {{ text }}
                             </p>
+                        </div>
+                        <!-- /ko -->
+                        <div class="json">
+                            <textarea style="width: 100%; height: 400px" data-bind="value: as_json"></textarea>
                         </div>
                     </div>
                 </div>
@@ -70,9 +75,6 @@
             <!-- ko if: error -->
                 <code data-bind="text: error | json:4"></code>
             <!-- /ko -->
-            <div class="json" data-bind="with: lesson">
-                <textarea disabled style="width: 80%; height: 400px" data-bind="value: as_json"></textarea>
-            </div>
         </div>
 
         <script type="text/javascript">
