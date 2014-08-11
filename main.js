@@ -160,7 +160,7 @@ define(function(require) {
         self.time = ko.observable(element.currentTime);
         var ts_interval = setInterval(function() {
             self.time(element.currentTime);
-        }, 100);
+        }, 50);
         // clear this interval when the element is gone
         ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
             console.info("Clearing video tracking interval!");
@@ -393,7 +393,7 @@ define(function(require) {
                 var end;
                 var next = lesson.find_next_section(self);
                 if(next) {
-                    end = next.time();
+                    end = next.time() - 0.1; // small offset to prevent from selecting next section!
                 } else {
                     end = lesson.player.duration();
                 }
