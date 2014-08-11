@@ -59,11 +59,13 @@
                         </div>
                     </div>
                 </div>
-
             </div>
             <!-- ko if: error -->
                 <code data-bind="text: error | json:4"></code>
             <!-- /ko -->
+            <div class="json" data-bind="with: lesson">
+                <textarea disabled style="width: 80%; height: 400px" data-bind="value: as_json"></textarea>
+            </div>
         </div>
 
         <script type="text/javascript">

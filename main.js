@@ -267,7 +267,9 @@ define(function(require) {
                 var out = {};
                 out.time = as_ts(self.time());
                 out.text = self.text();
-                out.notes = u.invoke(self.notes(), 'export_data');
+                if(self.notes().length) {
+                    out.notes = u.invoke(self.notes(), 'export_data');
+                }
                 return out;
             }
         }
@@ -305,6 +307,10 @@ define(function(require) {
             out.text_segments = u.invoke(self.sections(), 'export_data');
             return out;
         }
+
+        self.as_json = ko.computed(function() {
+            return JSON.stringify(self.export_data(), null, 4);
+        });
     };
 
     var app = new Application();
