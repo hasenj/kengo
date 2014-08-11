@@ -23,7 +23,7 @@
                         <video controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
 
                         <p>
-                            <code> Video Position: {{ currentTime | as_timestamp }} </code>
+                            <code> Video Position: {{ video_time | as_timestamp }} </code>
                         </p>
                         <div class="controls">
                             <button data-bind="click: video_back_peek, enable: video_paused">Back-Peek</button>

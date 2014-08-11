@@ -114,6 +114,132 @@ define(function(require) {
         return as_ts(ko.unwrap(seconds));
     }
 
+    // ctor for media player
+    // @param element: the html5 video element
+    var Player = function(element) {
+        var self = this;
+        self.show_controls = ko.observable(true);
+        ko.computed(function() {
+            element.controls = self.show_controls();
+        }, this, { disposeWhenNodeIsRemoved: element });
+
+        self.paused = ko.observable(true);
+        self.playing = ko.computed(function() {
+            return !self.paused();
+        });
+        // keep the playing observable in sync with the player
+        var sync_paused_status = function() {
+            self.paused(element.paused);
+        }
+        element.addEventListener("playing", sync_paused_status);
+        element.addEventListener("play", sync_paused_status);
+        element.addEventListener("pause", sync_paused_status);
+        element.addEventListener("ended", sync_paused_status);
+        element.addEventListener("seeked", sync_paused_status);
+        sync_paused_status();
+
+        self.duration = function() {
+            return element.duration;
+        }
+
+        self.play = function() {
+            element.play();
+        }
+        self.pause = function() {
+            element.pause();
+        }
+        self.seek = function(time) {
+            element.currentTime = time;
+        }
+        self.forward = function(delta) { // seek forward
+            element.currentTime += delta;
+        }
+        self.backward = function(delta) { // seek backward
+            element.currentTime -= delta;
+        }
+        self.time = ko.observable(element.currentTime);
+        var ts_interval = setInterval(function() {
+            self.time(element.currentTime);
+        }, 100);
+        // clear this interval when the element is gone
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+            console.info("Clearing video tracking interval!");
+            clearInterval(ts_interval);
+        });
+
+        // replay events in a more simpler way
+        // event_proxy is a subscribable (ko), when you subscribe to it, you get events in the following format:
+        //     {
+        //         ts: timestamp (mostly for uniquness .. you can ignore)
+        //         type: the event type/name; e.g. "play", "paused", etc. Most of the time, this is the most interesting property you want to check
+        //         event: the actual event object fired by the browser, in case you need it
+        //     }
+        self.event_proxy = ko.observable();
+        var relay_event = function(event) {
+            self.event_proxy({
+                ts: Date.now(),
+                type: event.type,
+                event: event
+            });
+        }
+        element.addEventListener("playing", relay_event);
+        element.addEventListener("play", relay_event);
+        element.addEventListener("pause", relay_event);
+        element.addEventListener("seeked", relay_event);
+        element.addEventListener("ended", relay_event);
+
+        // returns a promise that gets fulfilled after the player send the "playing" event
+        self.playing_promise = function() {
+            return new Promise(function(resolve, reject) {
+                var sub = self.event_proxy.subscribe(function(ev) {
+                    console.log("[PP] Event:", ev.type, "Time:", ev.ts);
+                    if(ev.type == "playing") {
+                        sub.dispose();
+                        resolve(true);
+                    }
+                });
+            });
+        }
+    }
+
+    // returns a promise that's fulfilled when we reach the end time, or rejected if we get interrupted before we reach it!
+    var player_play_segment = function(player, start_time, end_time, reset_to_time) {
+        player.pause();
+        player.seek(start_time);
+        player.play();
+        return new Promise(function(resolve, reject) {
+            // wait for the playing event, then start listening to one of "seeked ended paused" event
+            player.playing_promise().then(function() {
+                // XXX there must be a better way to know if the promise has been fulfilled or not!
+                var done = false; // keep track if we're done before trying to reject!
+                var time_sub = player.time.subscribe(function(time) {
+                    if(done) {
+                        time_sub.dispose();
+                        return;
+                    }
+                    if(time >= end_time) {
+                        done = true;
+                        player.pause();
+                        player.seek(reset_to_time);
+                        resolve(true);
+                        time_sub.dispose();
+                    }
+                });
+                var interruption_sub = player.event_proxy.subscribe(function(ev) {
+                    console.log("[IS] Event:", ev.type, "Time:", ev.ts);
+                    if(done) {
+                        interruption_sub.dispose();
+                        return;
+                    }
+                    if(u.contains("pause seeked ended".split(" "), ev.type)) { // interruption!!
+                        done = true;
+                        reject(ev.type);
+                    }
+                });
+            });
+        });
+    }
+
     /**
         json fields:
 
@@ -125,112 +251,92 @@ define(function(require) {
      */
     var Lesson = function(data) {
         var self = this;
-        // XXX for now assume video ..
+        // XXX for now assume a video source ..
         self.video_source = ko.observable("/" + data.media);
         self.title = ko.observable(data.title);
 
         self.video_element = constant(null);
-        self.currentTime = ko.observable(null);
+        self.video_time = ko.observable(null);
         self.video_peek_mode = ko.observable(false);
-        self.video_stop_time = ko.observable(null);
-        self.use_video_controls = ko.computed(function() {
-            if(self.video_peek_mode()) {
-                return false;
-            }
-            return true;
-        });
         self.video_paused = ko.observable(true);
-        self.video_playing = ko.computed(function() {
-            return !self.video_paused();
-        });
-
-        self.video_seek = function(time) {
-            self.video_element().currentTime = time;
-        }
-        self.video_play = function() {
-            self.video_element().play();
-        }
+        self.player = null;
 
         // video management .. "think" function for video player
         after_init(self.video_element).then(function() {
-            var element = self.video_element();
             console.log("Video Element has initialized");
+            var element = self.video_element();
+            self.player = new Player(element);
 
-            ko.computed(function() {
-                element.controls = self.use_video_controls();
-            }, this, { disposeWhenNodeIsRemoved: element });
-
-            // keep the playing observable in sync with the player
-            var sync_paused_status = function() {
-                self.video_paused(element.paused || self.video_peek_mode())
-            }
-            element.addEventListener("playing", sync_paused_status);
-            element.addEventListener("play", sync_paused_status);
-            element.addEventListener("pause", sync_paused_status);
-            element.addEventListener("ended", sync_paused_status);
-            element.addEventListener("seeked", sync_paused_status);
-            sync_paused_status();
-
-            var cleanup_loop_modes = function() {
-                self.video_stop_time(null);
-                self.video_peek_mode(false);
-            }
-            element.addEventListener("pause", cleanup_loop_modes);
-            element.addEventListener("seeked", cleanup_loop_modes);
-            element.addEventListener("ended", cleanup_loop_modes);
-
-            var ts_interval = setInterval(function() {
+            // keep our time in sync with player time
+            self.player.time.subscribe(function(time) {
                 if(!self.video_peek_mode()) {
-                    self.currentTime(element.currentTime);
+                    self.video_time(time);
                 }
-                if(self.video_stop_time()) {
-                    if(element.currentTime >= self.video_stop_time()) {
-                        element.pause();
-                        // cleaning up the stop time is done elsewhere (in
-                        // response to pausing, etc) so we don't have to worry
-                        // about it here
-
-                        // end peek mode if it was one
-                        if(self.video_peek_mode()) {
-                            self.video_peek_mode(false);
-                            element.currentTime = self.currentTime();
-                        }
-                    }
-                }
-            }, 100);
-            // clear this interval when the element is gone
-            ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
-                console.info("Clearing video tracking interval!");
-                clearInterval(ts_interval);
             });
+
+            self.player.playing.subscribe(function(yes) {
+                if(yes) {
+                    self.use_video_section(true);
+                }
+            });
+
+            var sync_paused = function(paused) {
+                self.video_paused(paused);
+            }
+            self.player.paused.subscribe(sync_paused);
+            sync_paused(self.player.paused());
+
         });
 
+        var player_peek = function(start, end, reset) {
+            self.video_peek_mode(true);
+            player_play_segment(self.player, start, end, reset).then(function(){
+                console.log("Segment peek done!");
+                self.video_peek_mode(false);
+            }).catch(function(error) {
+                console.log("Segment peek interrupted!", error);
+                self.video_peek_mode(false);
+            });
+        }
+
+        var peek_duration = 0.8;
         // see what starts here
         self.video_peek = function() {
-            self.video_peek_mode(true);
-            self.video_stop_time(self.currentTime() + 0.8);
-            self.video_element().play();
+            var start = self.video_time();
+            var end = start + peek_duration;
+            var reset = start;
+            player_peek(start, end, reset);
         }
 
         // see what ends here
         self.video_back_peek = function() {
-            self.video_peek_mode(true);
-            self.video_stop_time(self.currentTime());
-            self.video_seek(self.currentTime() - 0.8);
-            self.video_element().play();
+            var end = self.video_time();
+            var start = end - peek_duration;
+            var reset = end;
+            player_peek(start, end, reset);
         }
 
+        self.play_segment = function(start, end) {
+            var reset = start;
+            player_play_segment(self.player, start, end, reset).then(function(){
+                console.log("Segment play done!");
+            }).catch(function(error) {
+                console.log("Segment play interrupted!", error);
+            });
+        }
+
+
         self.forward_smaller = function() {
-            self.video_element().currentTime = self.currentTime() + 0.1;
+            self.player.forward(0.1);
         }
         self.forward_small = function() {
-            self.video_element().currentTime = self.currentTime() + 0.5;
+            self.player.forward(0.5);
         }
         self.backward_small = function() {
-            self.video_element().currentTime = self.currentTime() - 0.5;
+            self.player.backward(0.5)
         }
         self.backward_smaller = function() {
-            self.video_element().currentTime = self.currentTime() - 0.1;
+            self.player.backward(0.1)
         }
 
         var lesson = self;
@@ -271,20 +377,22 @@ define(function(require) {
 
 
             self.use_video_time = function() {
-                self.time(lesson.currentTime());
+                self.time(lesson.video_time());
             }
             self.jump_video_to_start = function() {
-                lesson.video_seek(self.time());
+                lesson.player.seek(self.time());
             }
             self.play_section_only = function() {
-                lesson.video_seek(self.time());
+                var start = self.time();
+                var end;
                 var next = lesson.find_next_section(self);
                 if(next) {
-                    lesson.video_stop_time(next.time());
+                    end = next.time();
+                } else {
+                    end = lesson.player.duration();
                 }
-                lesson.video_play();
+                lesson.play_segment(start, end);
             }
-
 
             // Section.export_data
             self.export_data = function() {
@@ -302,18 +410,12 @@ define(function(require) {
         self.follow_video = function() {
             self.use_video_section(true);
         }
-        self.video_playing.subscribe(function(yes) {
-            if(yes) {
-                self.use_video_section(true);
-            }
-        });
-
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
-        // find the last section whose time is <= currentTime
+        // find the last section whose time is <= video_time
         self.video_current_section = ko.computed(function() {
-            var currentTime = self.currentTime();
+            var video_time = self.video_time();
             return u.findLast(self.sections(), function(section) {
-                return section.time() <= currentTime;
+                return section.time() <= video_time;
             });
         });
         self.user_current_section = ko.observable(null);
@@ -352,11 +454,11 @@ define(function(require) {
         self.jump_to_section = function(section) {
             if(is_initialized(self.video_element)) {
                 // if the video is paused, and user selects a section, turn on manual section mode and choose this one
-                if(self.video_paused()) {
+                if(self.player.paused()) {
                     self.use_video_section(false);
                 }
                 self.user_current_section(section);
-                self.video_seek(section.time());
+                self.player.seek(section.time());
             }
         }
 
