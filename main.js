@@ -188,12 +188,14 @@ define(function(require) {
         element.addEventListener("seeked", relay_event);
         element.addEventListener("ended", relay_event);
 
-        // returns a promise that gets fulfilled after the player send the "playing" event
+        // returns a promise that gets fulfilled after the player has sent both "playing" and "seeked" events
         self.playing_promise = function() {
             return new Promise(function(resolve, reject) {
+                var waiting_for = ["playing", "seeked"];
                 var sub = self.event_proxy.subscribe(function(ev) {
                     console.log("[PP] Event:", ev.type, "Time:", ev.ts);
-                    if(ev.type == "playing") {
+                    u.pull(waiting_for, ev.type);
+                    if(waiting_for.length == 0) {
                         sub.dispose();
                         resolve(true);
                     }
