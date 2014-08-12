@@ -429,7 +429,16 @@ define(function(require) {
                     lesson.use_video_section(original_use_video_section);
                 }).catch(function(error) {
                     console.log("Section play interrupted!", error);
-                    lesson.use_video_section(original_use_video_section);
+                    // restore the follow video flag to its original value
+                    // except if the player is still playing .. because playing
+                    // the video usually sets the flag back to on
+                    // XXX this is bad coupling - too many parts are messing
+                    // with the state
+                    if(lesson.player.paused()) {
+                        lesson.use_video_section(original_use_video_section);
+                    } else {
+                        lesson.use_video_section(true);
+                    }
                     throw error
                 });
             }
