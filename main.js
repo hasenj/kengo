@@ -131,6 +131,7 @@ define(function(require) {
     //  if there's no mm: then the number is interprested as seconds
     // also: assumes "ts" is a string, not a number
     var parse_ts = function(ts) {
+        if(!ts) { return null; }
         if(ts.indexOf(":") == -1) {
             return Number(ts);
         } else {
@@ -486,6 +487,11 @@ define(function(require) {
                 });
             }
 
+            self.insert_section_at_player_time = function() {
+                var time = lesson.player.time();
+                lesson.insert_new_section(time);
+            }
+
             // Section.export_data
             self.export_data = function() {
                 var out = {};
@@ -511,7 +517,7 @@ define(function(require) {
             });
         });
         self.user_current_section = ko.observable(null);
-        self.use_video_section = ko.observable(true);
+        self.use_video_section = ko.observable(true); // XXX turn into computed!
         self.current_section = ko.computed(function() {
             if(self.use_video_section()) {
                 return self.video_current_section();
@@ -581,6 +587,16 @@ define(function(require) {
             if(section) {
                 self.jump_to_section(section);
             }
+        }
+
+        // XXX for more robsutness, make the list of sections auto-sorted by time (as a computed)
+        self.insert_new_section = function(time) {
+            // find the index where must insert this new section
+            var index = u.findIndex(self.sections(), function(section) {
+                return section.time() > time;
+            });
+            var new_section = new Section({time: as_ts(time), text: "", notes: []});
+            self.sections.splice(index, 0, new_section);
         }
 
         self.note_edit_mode = flag();

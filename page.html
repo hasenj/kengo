@@ -60,8 +60,9 @@
                             <button data-bind="click: $parent.note_edit_mode.turn_on, enable: lesson.video_paused, visible: $parent.note_edit_mode.is_off">Edit</button>
                             <button data-bind="click: $parent.note_edit_mode.turn_off, enable: lesson.video_paused, visible: $parent.note_edit_mode.is_on">View</button>
                             <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
-                            <button data-bind="click: jump_video_to_start"> |< </button>
-                            <button data-bind="click: play_section_only, enable: lesson.video_paused"> [>] </button>
+                            <button data-bind="click: jump_video_to_start"> |&lt; </button>
+                            <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
+                            <button data-bind="click: insert_section_at_player_time, enable: lesson.video_paused"> + new </button>
                         </div>
                         <div class="text" data-bind="visible: $parent.note_edit_mode.is_off">
                             {{ text }}
