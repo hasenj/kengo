@@ -2,6 +2,7 @@ define(function(require) {
     var ko = require('knockout');
     require('knockout.mapping');
     require('knockout.punches');
+    require('knockout-switch-case');
     ko.punches.enableAll();
 
     require('kobindings');
