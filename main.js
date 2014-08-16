@@ -286,7 +286,7 @@ define(function(require) {
                         interruption_sub.dispose();
                         return;
                     }
-                    if(u.contains("pause seeked ended".split(" "), ev.type)) { // interruption!!
+                    if(u.contains("pause seeked".split(" "), ev.type)) { // interruption!!
                         done = true;
                         reject(ev.type);
                     }
@@ -437,7 +437,7 @@ define(function(require) {
                 if(next) {
                     end = next.time();
                 } else {
-                    end = lesson.player.duration();
+                    end = lesson.player.duration() - 0.1; // hack because reaching the end looks like a pause to the player
                 }
                 // Prevent selecting next section at the end by turning off video following.
                 lesson.follow_video_blockers.push(1);
@@ -467,7 +467,10 @@ define(function(require) {
             }
         }
 
-        self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
+        self.sections_list = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
+        self.sections = ko.computed(function() {
+            return u.sortBy(self.sections_list(), function(s) { return s.time() });
+        });
 
         // find the last section whose time is <= video_time
         self.find_video_section = function() {
@@ -551,11 +554,8 @@ define(function(require) {
         // XXX for more robsutness, make the list of sections auto-sorted by time (as a computed)
         self.insert_new_section = function(time) {
             // find the index where must insert this new section
-            var index = u.findIndex(self.sections(), function(section) {
-                return section.time() > time;
-            });
             var new_section = new Section({time: as_ts(time), text: "", notes: []});
-            self.sections.splice(index, 0, new_section);
+            self.sections_list.push(new_section);
             self.jump_to_section(new_section);
             self.note_edit_mode.turn_on();
         }
