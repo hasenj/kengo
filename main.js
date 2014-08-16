@@ -36,6 +36,11 @@ define(function(require) {
 
     };
 
+    // to make IIFE's more readable
+    var invoke = function(fn) {
+        fn();
+    }
+
     // proxy
     // useful for passing constructors to u.map
     var ctor_fn = function(ctor) {
@@ -307,7 +312,6 @@ define(function(require) {
 
         self.video_element = constant(null);
         self.video_time = ko.observable(null);
-        self.video_peek_mode = ko.observable(false);
         self.video_paused = ko.observable(true);
         self.player = null;
 
@@ -319,17 +323,7 @@ define(function(require) {
 
             // keep our time in sync with player time
             self.player.time.subscribe(function(time) {
-                if(!self.video_peek_mode()) {
-                    self.video_time(time);
-                }
-            });
-
-            self.player.playing.subscribe(function(yes) {
-                if(yes) {
-                    if(!self.video_peek_mode() && !self.note_edit_mode()) {
-                        self.use_video_section(true);
-                    }
-                }
+                self.video_time(time); // XXX do we even need this as a separate observable?!
             });
 
             var sync_paused = function(paused) {
@@ -337,21 +331,19 @@ define(function(require) {
             }
             self.player.paused.subscribe(sync_paused);
             sync_paused(self.player.paused());
-
-            // hide controls in video peek mode!
-            ko.computed(function() {
-                self.player.show_controls(!self.video_peek_mode());
-            });
         });
 
         var player_peek = function(start, end, reset) {
-            self.video_peek_mode(true);
+            self.player.show_controls(false);
+            self.follow_video_blockers.push(1);
             player_play_segment(self.player, start, end, reset).then(function(){
                 console.log("Segment peek done!");
-                self.video_peek_mode(false);
+                self.player.show_controls(true);
+                self.follow_video_blockers.pop();
             }).catch(function(error) {
                 console.log("Segment peek interrupted!", error);
-                self.video_peek_mode(false);
+                self.player.show_controls(true);
+                self.follow_video_blockers.pop();
             });
         }
 
@@ -447,43 +439,14 @@ define(function(require) {
                 } else {
                     end = lesson.player.duration();
                 }
-                var original_use_video_section = lesson.use_video_section();
                 // Prevent selecting next section at the end by turning off video following.
-                // We have to do it this way because usually playing a video turns on the 'use_video_section', so we want to only
-                // turn it off after it gets turned on by the other listener!
-                // but this could be problamatic if we're playing a section so small .. smaller than 0.3 seconds
-                // so doing a sanity check is a good idea
-                if(end - start > 0.3) {
-                    var sub = lesson.player.playing.subscribe(function(yes) {
-                        if(yes) {
-                            sub.dispose();
-                            setTimeout(function() {
-                                lesson.use_video_section(false);
-                            }, 10);
-                        }
-                    });
-                }
+                lesson.follow_video_blockers.push(1);
                 lesson.play_segment(start, end).then(function(){
                     console.log("Section play done!");
-                    lesson.use_video_section(original_use_video_section);
+                    lesson.follow_video_blockers.pop();
                 }).catch(function(error) {
                     console.log("Section play interrupted!", error);
-                    // restore the follow video flag to its original value
-                    // except if the player is still playing .. because playing
-                    // the video usually sets the flag back to on
-                    // XXX this is bad coupling - too many parts are messing
-                    // with the state
-                    // XXX this is getting really out of hand .. we need a more reliable/robust function to determine whether we're following video or not!
-                    if(lesson.player.paused()) {
-                        lesson.use_video_section(original_use_video_section);
-                    } else {
-                        if(lesson.note_edit_mode()) {
-                            lesson.use_video_section(false);
-                        } else {
-                            lesson.use_video_section(true);
-                        }
-                    }
-                    throw error
+                    lesson.follow_video_blockers.pop();
                 });
             }
 
@@ -504,36 +467,36 @@ define(function(require) {
             }
         }
 
-        // XXX odd naming ..
-        self.follow_video = function() {
-            self.use_video_section(true);
-        }
         self.sections = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
+
         // find the last section whose time is <= video_time
-        self.video_current_section = ko.computed(function() {
+        self.find_video_section = function() {
             var video_time = self.video_time();
             return u.findLast(self.sections(), function(section) {
                 return section.time() <= video_time;
             });
+        };
+        // we wish to give other components the ability to temporarily block following video
+        // so we must first build a list of video blockers that can be removed!
+        self.follow_video_blockers = ko.observableArray();
+        self.following_video = ko.computed(function() {
+            return self.follow_video_blockers().length === 0 && !self.video_paused();
         });
-        self.user_current_section = ko.observable(null);
-        self.use_video_section = ko.observable(true); // XXX turn into computed!
-        self.current_section = ko.computed(function() {
-            if(self.use_video_section()) {
-                return self.video_current_section();
-            } else {
-                return self.user_current_section();
+        self.current_section = ko.observable(null).extend({ notify_strict: true });
+        ko.computed(function() {
+            if(self.following_video()) {
+                self.current_section(self.find_video_section());
             }
-        }).extend({ notify_strict: true });
+        });
 
         // debug
-        (function() { // IIFE
+        invoke(function() { // IIFE
             var previous_section = self.current_section();
             self.current_section.subscribe(function(section) {
                 console.log("New section .. are they equal?", section === previous_section);
                 previous_section = section;
             });
-        }());
+        });
 
         // find section after given one
         self.find_next_section = function(section) {
@@ -560,11 +523,7 @@ define(function(require) {
 
         self.jump_to_section = function(section) {
             if(is_initialized(self.video_element)) {
-                // if the video is paused, and user selects a section, turn on manual section mode and choose this one
-                if(self.player.paused()) {
-                    self.use_video_section(false);
-                }
-                self.user_current_section(section);
+                self.current_section(section);
                 self.player.seek(section.time());
             }
         }
@@ -597,9 +556,11 @@ define(function(require) {
             });
             var new_section = new Section({time: as_ts(time), text: "", notes: []});
             self.sections.splice(index, 0, new_section);
+            self.jump_to_section(new_section);
+            self.note_edit_mode.turn_on();
         }
 
-        self.note_edit_mode = flag();
+        self.note_edit_mode = flag(false);
         // when the current section changes, turn off edit mode!
         self.current_section.subscribe(function() {
             self.note_edit_mode.turn_off();
@@ -611,8 +572,12 @@ define(function(require) {
             self.note_edit_mode.toggle();
         }
         self.note_edit_mode.subscribe(function(yes) {
+            // XXX assuming the first call will always be a "yes" ..
+            // because we don't want to pop something that someone else pushed!!
             if(yes) {
-                self.use_video_section(false);
+                self.follow_video_blockers.push(1);
+            } else {
+                self.follow_video_blockers.pop();
             }
         });
 
