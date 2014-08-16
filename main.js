@@ -29,6 +29,11 @@ define(function(require) {
             });
         }
 
+        // show a page for creating a new lesson
+        self.newLesson = function() {
+            // XXX TODO
+        }
+
     };
 
     // proxy
@@ -61,6 +66,39 @@ define(function(require) {
             }
         });
     }
+
+    var flag = function(init) {
+        var value = ko.observable(Boolean(init));
+        value.turn_on = function() {
+            value(true);
+        }
+        value.turn_off = function() {
+            value(false);
+        }
+        value.is_on = ko.computed(function() {
+            return Boolean(value());
+        });
+        value.is_off = ko.computed(function() {
+            return !value();
+        });
+        value.toggle = function() {
+            value(!value());
+        }
+        return value;
+    };
+
+    ko.extenders.notify_strict = function(target, yes) {
+        var strict_equality = function(a, b) {
+            return a === b;
+        };
+
+        if(yes) {
+            target["equalityComparer"] = strict_equality;
+        }
+
+        //return the original observable
+        return target;
+    };
 
     // a function to return a promise for when an observable become non-undefined and non-null
     // but without guarantee that it won't become undefined or null again!
@@ -287,7 +325,7 @@ define(function(require) {
 
             self.player.playing.subscribe(function(yes) {
                 if(yes) {
-                    if(!self.video_peek_mode()) {
+                    if(!self.video_peek_mode() && !self.note_edit_mode()) {
                         self.use_video_section(true);
                     }
                 }
@@ -393,7 +431,6 @@ define(function(require) {
                 lesson.jump_to_section(self);
             }
 
-
             self.use_video_time = function() {
                 self.time(lesson.video_time());
             }
@@ -435,10 +472,15 @@ define(function(require) {
                     // the video usually sets the flag back to on
                     // XXX this is bad coupling - too many parts are messing
                     // with the state
+                    // XXX this is getting really out of hand .. we need a more reliable/robust function to determine whether we're following video or not!
                     if(lesson.player.paused()) {
                         lesson.use_video_section(original_use_video_section);
                     } else {
-                        lesson.use_video_section(true);
+                        if(lesson.note_edit_mode()) {
+                            lesson.use_video_section(false);
+                        } else {
+                            lesson.use_video_section(true);
+                        }
                     }
                     throw error
                 });
@@ -476,7 +518,16 @@ define(function(require) {
             } else {
                 return self.user_current_section();
             }
-        });
+        }).extend({ notify_strict: true });
+
+        // debug
+        (function() { // IIFE
+            var previous_section = self.current_section();
+            self.current_section.subscribe(function(section) {
+                console.log("New section .. are they equal?", section === previous_section);
+                previous_section = section;
+            });
+        }());
 
         // find section after given one
         self.find_next_section = function(section) {
@@ -531,6 +582,23 @@ define(function(require) {
                 self.jump_to_section(section);
             }
         }
+
+        self.note_edit_mode = flag();
+        // when the current section changes, turn off edit mode!
+        self.current_section.subscribe(function() {
+            self.note_edit_mode.turn_off();
+        });
+        self.enter_note_edit_mode = function() {
+            self.note_edit_mode.turn_on();
+        }
+        self.leave_note_edit_mode = function() {
+            self.note_edit_mode.toggle();
+        }
+        self.note_edit_mode.subscribe(function(yes) {
+            if(yes) {
+                self.use_video_section(false);
+            }
+        });
 
         // Lesson.export_data
         self.export_data = function() {
