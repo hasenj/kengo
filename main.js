@@ -19,8 +19,9 @@ define(function(require) {
             self.loading_items().length > 0;
         });
 
-        self.loadLesson = function(lesson_url) {
+        self.loadLesson = function(lesson_slug) {
             self.loading_items.push(1); // XXX find a way to bind loading indicator to a promise?
+            var lesson_url = "/api/lesson/" + lesson_slug;
             req.get(lesson_url).then(function(data) {
                 self.loading_items.pop();
                 self.error(null);
@@ -345,7 +346,7 @@ define(function(require) {
             var self = this;
             self.title = ko.observable(data.title);
             self.load = function() {
-                app.loadLesson(data.url);
+                app.loadLesson(data.slug);
             }
         }
 

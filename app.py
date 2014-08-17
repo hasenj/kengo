@@ -1,7 +1,7 @@
 import flask
 app = flask.Flask(__name__)
 
-import os, itertools, json
+import os, itertools, json, codecs
 
 def get_file_ext(filename):
     return os.path.splitext(filename)[1]
@@ -9,22 +9,25 @@ def get_file_ext(filename):
 def is_json_file(filename):
     return os.path.isfile(filename) and get_file_ext(filename) == ".json"
 
-def find_files(path):
+def find_files(dirname):
     """like os.listdir, but keeps the full path"""
-    return (os.path.join(path, f) for f in os.listdir(path))
+    return (os.path.join(dirname, filename) for filename in os.listdir(dirname))
 
-def filtered_listing(path, filter_fn):
-    return itertools.ifilter(filter_fn, find_files(path))
+def filtered_listing(dirname, filter_fn):
+    return itertools.ifilter(filter_fn, find_files(dirname))
 
-def file_url(file):
-    return "/" + file; # HACK
+def slug_from_file(filename):
+    base = os.path.basename(filename)
+    return os.path.splitext(base)[0]
 
-def lesson_data(file):
+def read_json_file(filename):
+    with open(filename) as fp:
+        return json.load(fp)
+
+def lesson_data(filename):
     """Read file as json, extract data, and return it as a dict"""
-    data = {}
-    with open(file) as f:
-        data = json.load(f)
-    return dict(url=file_url(file), title=data['title'])
+    data = read_json_file(filename)
+    return dict(slug=slug_from_file(filename), title=data['title'])
 
 @app.route("/api/lessons")
 def list_lessons():
@@ -32,6 +35,30 @@ def list_lessons():
     lessons = list(filtered_listing("lessons", is_json_file))
     lessons = map(lesson_data, lessons)
     return flask.jsonify(lessons=lessons)
+
+@app.route("/api/lesson/<slug>", methods=['PUT', 'GET'])
+def lesson_resource(slug):
+    request = flask.request
+    if request.method == "GET":
+        return get_lesson(slug)
+    if request.method == "PUT":
+        return put_lesson(slug, request.json)
+
+
+def get_lesson(slug):
+    filename = os.path.join("lessons", slug + ".json")
+    # XXX handle error case if file doesn't exist!
+    # XXX also maybe do security to ensure people can't put .. and so on!!
+    # XXX or actually it doesn't matter much since this is only temporary - until we get a real database
+    lesson = read_json_file(filename)
+    return flask.jsonify(**lesson)
+
+def put_lesson(slug, data):
+    filename = os.path.join("lessons", slug + ".json")
+    # XXX see notes inside get_lesson
+    with codecs.open(filename, 'w', 'utf8') as fp:
+        json.dump(data, fp, indent=4, separators=(',', ': '), ensure_ascii=False)
+    return flask.jsonify()
 
 if __name__ == "__main__":
     app.run(debug=True, port=10110)
