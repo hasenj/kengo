@@ -22,6 +22,7 @@ define(function(require) {
                 self.loading(false);
                 self.error(null);
                 self.lesson(new Lesson(data));
+                self.item(self.lesson()); // set as the page item!
             }).catch(function(error) {
                 self.lesson(null);
                 self.loading(false);
@@ -31,9 +32,10 @@ define(function(require) {
 
         // show a page for creating a new lesson
         self.newLesson = function() {
-            // XXX TODO
+            self.item(new CreateLessonPage(self));
         }
 
+        self.item = ko.observable();
     };
 
     // to make IIFE's more readable
@@ -295,6 +297,33 @@ define(function(require) {
         });
     }
 
+    var CreateLessonPage = function(app) {
+        var self = this;
+        self.template_name = "new_lesson_template";
+        self.title = ko.observable("");
+        self.media = ko.observable("");
+        self.text_language = ko.observable("japanese");
+        self.user_language = ko.observable("arabic");
+
+        self.start = function() {
+            var lesson = new Lesson(self.export_data());
+            window.s = lesson; // debug
+            app.lesson(lesson);
+            app.item(lesson);
+        }
+
+        // CreateLessonPage.export_data
+        self.export_data = function() {
+            var out = {};
+            out.media = self.media();
+            out.title = self.title();
+            out.text_language = self.text_language();
+            out.user_language = self.user_language();
+            out.text_segments = [{time: "00:00", text: ""}];
+            return out;
+        }
+    }
+
     /**
         json fields:
 
@@ -306,6 +335,7 @@ define(function(require) {
      */
     var Lesson = function(data) {
         var self = this;
+        self.template_name = "lesson_template";
         // XXX for now assume a video source ..
         self.video_source = ko.observable("/" + data.media);
         self.title = ko.observable(data.title);
@@ -551,7 +581,10 @@ define(function(require) {
             }
         }
 
-        // XXX for more robsutness, make the list of sections auto-sorted by time (as a computed)
+        self.insert_section_at_player_time = function() {
+            var time = self.player.time();
+            self.insert_new_section(time);
+        }
         self.insert_new_section = function(time) {
             // find the index where must insert this new section
             var new_section = new Section({time: as_ts(time), text: "", notes: []});
@@ -603,5 +636,5 @@ define(function(require) {
     ko.applyBindings(app, document.querySelector('#app-container'));
 
     // initialize the page with the test lesson
-    app.loadLesson("remember");
+    // app.loadLesson("remember");
 });

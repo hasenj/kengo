@@ -15,7 +15,18 @@
             <!-- ko if: loading -->
                 Loading .....
             <!-- /ko -->
-            <div class="lesson" data-bind="with: lesson">
+            <!-- ko with: item -->
+                <!-- ko template: template_name -->
+                <!-- /ko -->
+            <!-- /ko -->
+            <!-- ko if: error -->
+                <code data-bind="text: error | json:4"></code>
+            <!-- /ko -->
+            <button data-bind="click: newLesson">New Lesson</button>
+        </div>
+
+        <script type="text/html" id="lesson_template">
+            <div class="lesson">
                 <div class="lesson_side">
                     <div class="player">
                         <h1 data-bind="text: title"></h1>
@@ -34,7 +45,7 @@
                             <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
                             <button data-bind="click: use_prev_section, enable: prev_section"> &lt; Prev Segment</button>
                             <button data-bind="click: use_next_section, enable: next_section">Next Segment &gt; </button>
-
+                            <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
                         </div>
                     </div>
 
@@ -61,7 +72,6 @@
                             <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
                             <button data-bind="click: jump_video_to_start"> |&lt; </button>
                             <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
-                            <button data-bind="click: insert_section_at_player_time, enable: lesson.video_paused"> + new </button>
                         </div>
                         <div class="text" data-bind="visible: $parent.note_edit_mode.is_off">
                             {{ text }}
@@ -77,10 +87,14 @@
                     </div>
                 </div>
             </div>
-            <!-- ko if: error -->
-                <code data-bind="text: error | json:4"></code>
-            <!-- /ko -->
-        </div>
+        </script>
+        <script type="text/html" id="new_lesson_template">
+            <input data-bind="value: media, valueUpdate:'input'" placeholder="remember.webm" />
+            <input data-bind="value: title, valueUpdate:'input'" placeholder="H&MC Remember" />
+            <input data-bind="value: text_language, valueUpdate:'input'" placeholder="japanese" />
+            <input data-bind="value: user_language, valueUpdate:'input'" placeholder="arabic" />
+            <button data-bind="click: start">Go!</button>
+        </script>
 
         <script type="text/javascript">
             require(['rconfig'], function() {
