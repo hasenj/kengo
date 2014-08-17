@@ -25,7 +25,7 @@ define(function(require) {
             req.get(lesson_url).then(function(data) {
                 self.loading_items.pop();
                 self.error(null);
-                self.lesson(new Lesson(data));
+                self.lesson(new Lesson(lesson_slug, data));
                 self.item(self.lesson()); // set as the page item!
             }).catch(function(error) {
                 self.loading_items.pop();
@@ -362,7 +362,7 @@ define(function(require) {
             "title": arbitrary string, lesson title
             "text_segments": list of sections. see Section ctor below
      */
-    var Lesson = function(data) {
+    var Lesson = function(slug, data) {
         var self = this;
         self.template_name = "lesson_template";
         // XXX for now assume a video source ..
@@ -657,6 +657,29 @@ define(function(require) {
         self.as_json = ko.computed(function() {
             return JSON.stringify(self.export_data(), null, 4);
         });
+
+        self.saving = ko.observable(false);
+        self.save = function() {
+            var url = "/api/lesson/" + slug;
+            var data = self.export_data();
+            self.saving(true);
+            req.put(url, data).then(function() {
+                self.saving(false);
+            });
+        }
+        self.save_enabled = ko.computed(function() {
+            return !self.saving();
+        });
+        self.save_text = ko.computed(function() {
+            if(self.save_enabled()) {
+                return "Save";
+            }
+            if(self.saving()) {
+                return "Saving ..";
+            }
+            return "Save"; // defaule
+        });
+
     };
 
     var app = new Application();
