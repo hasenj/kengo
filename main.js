@@ -14,18 +14,21 @@ define(function(require) {
         var self = this;
         self.lesson = ko.observable(null);
         self.error = ko.observable(null);
-        self.loading = ko.observable(false);
+        self.loading_items = ko.observableArray();
+        self.loading = ko.computed(function() {
+            self.loading_items().length > 0;
+        });
 
-        self.loadLesson = function(name) {
-            self.loading(true); // XXX find a way to bind loading indicator to a promise?
-            req.get("/" + name + ".json").then(function(data) {
-                self.loading(false);
+        self.loadLesson = function(lesson_url) {
+            self.loading_items.push(1); // XXX find a way to bind loading indicator to a promise?
+            req.get(lesson_url).then(function(data) {
+                self.loading_items.pop();
                 self.error(null);
                 self.lesson(new Lesson(data));
                 self.item(self.lesson()); // set as the page item!
             }).catch(function(error) {
+                self.loading_items.pop();
                 self.lesson(null);
-                self.loading(false);
                 self.error(error.message);
             });
         }
@@ -33,6 +36,16 @@ define(function(require) {
         // show a page for creating a new lesson
         self.newLesson = function() {
             self.item(new CreateLessonPage(self));
+        }
+
+        self.loadLessonList = function() {
+            self.loading_items.push(1);
+            req.get("/api/lessons").then(function(data) {
+                self.item(new LessonListPage(self, data));
+                self.loading_items.pop();
+            }).catch(function(error) {
+                self.loading_items.pop();
+            });
         }
 
         self.item = ko.observable();
@@ -324,6 +337,21 @@ define(function(require) {
         }
     }
 
+    var LessonListPage = function(app, data) {
+        var self = this;
+        self.template_name = "lesson_list_template";
+
+        var LessonEntry = function(data) {
+            var self = this;
+            self.title = ko.observable(data.title);
+            self.load = function() {
+                app.loadLesson(data.url);
+            }
+        }
+
+        self.lessons = ko.observableArray(u.map(data.lessons, ctor_fn(LessonEntry)));
+    }
+
     /**
         json fields:
 
@@ -337,7 +365,7 @@ define(function(require) {
         var self = this;
         self.template_name = "lesson_template";
         // XXX for now assume a video source ..
-        self.video_source = ko.observable("/" + data.media);
+        self.video_source = ko.observable(data.media);
         self.title = ko.observable(data.title);
 
         self.video_element = constant(null);
@@ -635,6 +663,6 @@ define(function(require) {
 
     ko.applyBindings(app, document.querySelector('#app-container'));
 
-    // initialize the page with the test lesson
-    // app.loadLesson("remember");
+    // initialize the page with the lesson list
+    app.loadLessonList();
 });

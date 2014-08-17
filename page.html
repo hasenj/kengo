@@ -12,6 +12,10 @@
     <body>
 
         <div id="app-container"> <!-- bound to app -->
+            <div class="top_bar">
+                <button data-bind="click: loadLessonList">Lesson List</button>
+                <button data-bind="click: newLesson">New Lesson</button>
+            </div>
             <!-- ko if: loading -->
                 Loading .....
             <!-- /ko -->
@@ -22,7 +26,6 @@
             <!-- ko if: error -->
                 <code data-bind="text: error | json:4"></code>
             <!-- /ko -->
-            <button data-bind="click: newLesson">New Lesson</button>
         </div>
 
         <script type="text/html" id="lesson_template">
@@ -94,6 +97,14 @@
             <input data-bind="value: text_language, valueUpdate:'input'" placeholder="japanese" />
             <input data-bind="value: user_language, valueUpdate:'input'" placeholder="arabic" />
             <button data-bind="click: start">Go!</button>
+        </script>
+
+        <script type="text/html" id="lesson_list_template">
+            <div data-bind="foreach: lessons">
+                <div>
+                    <a href="" data-bind="click: load, text: title"></a>
+                </div>
+            </div>
         </script>
 
         <script type="text/javascript">
