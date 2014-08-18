@@ -326,16 +326,25 @@ define(function(require) {
     var CreateLessonPage = function(app) {
         var self = this;
         self.template_name = "new_lesson_template";
+        self.slug = ko.observable("");
         self.title = ko.observable("");
         self.media = ko.observable("");
         self.text_language = ko.observable("japanese");
         self.user_language = ko.observable("arabic");
+        self.error = ko.observable("");
 
         self.start = function() {
-            var lesson = new Lesson(self.export_data());
-            window.s = lesson; // debug
-            app.lesson(lesson);
-            app.item(lesson);
+            self.error("");
+            var lesson = new Lesson(self.slug(), self.export_data());
+            // try to save the lesson first
+            lesson.create().then(function() {
+                app.lesson(lesson);
+                app.item(lesson);
+            }).catch(function(error) {
+                var friendly_message = "Creating lesson failed: ["+ error.error + "] " + error.message;
+                console.error(friendly_message);
+                self.error(friendly_message);
+            });
         }
 
         // CreateLessonPage.export_data
@@ -684,17 +693,24 @@ define(function(require) {
         });
         self.saved(true); // start saved
 
-        self.save = function() {
+        var save = function(method) {
             var url = "/api/lesson/" + slug;
             var data = self.export_data();
             self.saving(true);
             self.saved(true); // be optimistic!
-            req.put(url, data).then(function() {
+            return req.request(method, url, {}, data).then(function() {
                 self.saving(false);
-            }).catch(function() {
+            }).catch(function(error) {
                 self.saving(false);
                 self.saved(false); // our optimism was wrong!
+                throw error.response;
             });
+        }
+        self.save = function() {
+            return save("put");
+        }
+        self.create = function() { // like save, put for first time creation: uses POST
+            return save("post");
         }
         self.save_enabled = ko.computed(function() {
             return !self.saving() && !self.saved();

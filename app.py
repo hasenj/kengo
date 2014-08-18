@@ -36,19 +36,32 @@ def list_lessons():
     lessons = map(lesson_data, lessons)
     return flask.jsonify(lessons=lessons)
 
-@app.route("/api/lesson/<slug>", methods=['PUT', 'GET'])
+def error_response(status_code, error_message, error_code=""):
+    """Shortcut to return json error responses"""
+    resp = flask.jsonify(dict(message=error_message, error=error_code))
+    resp.status_code = status_code
+    return resp
+
+@app.route("/api/lesson/<slug>", methods=['PUT', 'GET', 'POST'])
 def lesson_resource(slug):
     request = flask.request
     if request.method == "GET":
         return get_lesson(slug)
     if request.method == "PUT":
         return put_lesson(slug, request.json)
+    if request.method == "POST":
+        # for post, make sure the lesson doesn't already exist
+        filename = os.path.join("lessons", slug + ".json")
+        if os.path.isfile(filename):
+            return error_response(401, "slug already exists", "file-exists")
+        else:
+            return put_lesson(slug, request.json)
 
 
 def get_lesson(slug):
     filename = os.path.join("lessons", slug + ".json")
     # XXX handle error case if file doesn't exist!
-    # XXX also maybe do security to ensure people can't put .. and so on!!
+    # XXX also maybe do security to ensure people can't put `..` and so on!!
     # XXX or actually it doesn't matter much since this is only temporary - until we get a real database
     lesson = read_json_file(filename)
     return flask.jsonify(**lesson)

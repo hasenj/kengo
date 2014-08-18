@@ -113,11 +113,34 @@
             </div>
         </script>
         <script type="text/html" id="new_lesson_template">
-            <input data-bind="value: media, valueUpdate:'input'" placeholder="remember.webm" />
-            <input data-bind="value: title, valueUpdate:'input'" placeholder="H&MC Remember" />
-            <input data-bind="value: text_language, valueUpdate:'input'" placeholder="japanese" />
-            <input data-bind="value: user_language, valueUpdate:'input'" placeholder="arabic" />
-            <button data-bind="click: start">Go!</button>
+            <form class="new_lesson" data-bind="submit: start">
+                <div class="error" data-bind="visible: error">
+                    {{ error }}
+                </div>
+                <div class="group">
+                    <label>Slug</label>
+                    <input data-bind="value: slug, valueUpdate:'input'" placeholder="remember" />
+                </div>
+                <div class="group">
+                    <label>Media File</label>
+                    <input data-bind="value: media, valueUpdate:'input'" placeholder="/media/remember.webm" />
+                </div>
+                <div class="group">
+                    <label>Title</label>
+                    <input data-bind="value: title, valueUpdate:'input'" placeholder="H&MC Remember" />
+                </div>
+                <div class="group">
+                    <label>Text Language</label>
+                    <input data-bind="value: text_language, valueUpdate:'input'" placeholder="japanese" />
+                </div>
+                <div class="group">
+                    <label>Your Language</label>
+                    <input data-bind="value: user_language, valueUpdate:'input'" placeholder="arabic" />
+                </div>
+                <div class="group">
+                    <button type="submit" data-bind="click: start">Go!</button>
+                </div>
+            </form>
         </script>
 
         <script type="text/html" id="lesson_list_template">
