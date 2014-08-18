@@ -126,6 +126,32 @@ define(function(require) {
     test_parser("この大学【だい・がく】");
     test_parser("学【が・く】"); // malformed
 
+    var to_html = function(text, parser) {
+        var parse = parser.parse(text);
+        var html_parts = u.map(parse, function(item) {
+            if(item.ruby) {
+                return "<ruby>" + item.char + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>" + "</ruby>";
+            } else {
+                return item.char;
+            }
+        });
+        return html_parts.join("");
+    }
+
+    function test_conversion(text) {
+        console.log("Converting:", text);
+        try {
+            console.log(to_html(text, parser));
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    test_conversion("hello");
+    test_conversion("隣【となり】");
+    test_conversion("大学【だい・がく】");
+    test_conversion("この大学【だい・がく】");
+    test_conversion("学【が・く】"); // malformed
 
     return parser;
 });
