@@ -9,6 +9,7 @@ define(function(require) {
 
     var u = require('lodash');
     var req = require('request');
+    var furigana = require('furigana')
 
     var Application = function() {
         var self = this;
