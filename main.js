@@ -552,13 +552,13 @@ define(function(require) {
                 return section.time() <= video_time;
             });
         };
+        self.current_section = ko.observable(null).extend({ notify_strict: true });
         // we wish to give other components the ability to temporarily block following video
         // so we must first build a list of video blockers that can be removed!
         self.follow_video_blockers = ko.observableArray();
         self.following_video = ko.computed(function() {
-            return self.follow_video_blockers().length === 0 && !self.video_paused();
+            return (self.follow_video_blockers().length === 0 && !self.video_paused()) || !self.current_section();
         });
-        self.current_section = ko.observable(null).extend({ notify_strict: true });
         ko.computed(function() {
             if(self.following_video()) {
                 self.current_section(self.find_video_section());

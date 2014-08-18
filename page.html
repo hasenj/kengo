@@ -13,7 +13,7 @@
     <body>
 
         <div id="app-container"> <!-- bound to app -->
-            <div class="top_bar">
+            <div id="topbar">
                 <button data-bind="click: loadLessonList">Lesson List</button>
                 <button data-bind="click: newLesson">New Lesson</button>
             </div>
@@ -42,8 +42,8 @@
                         </p>
                         <div class="controls">
                             <div class="group">
-                                <button data-bind="click: video_back_peek, enable: video_paused">Back-Peek</button>
-                                <button data-bind="click: video_peek, enable: video_paused">Peek</button>
+                                <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
+                                <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
                             </div>
                             <div class="group">
                                 <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
