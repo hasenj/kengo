@@ -1,0 +1,46 @@
+// Furigana support for FFox
+// Based on http://www.useragentman.com/blog/2010/10/29/cross-browser-html5-ruby-annotations-using-css/
+
+@-moz-document url-prefix() { // make it only run in ffox. see http://stackoverflow.com/a/953491/35364
+
+    /* Ruby text*/
+    ruby {
+        display: inline-table;
+        text-align: center;
+        border-collapse: collapse;
+        border: none;
+        /* border collapse mechanism
+         will be used to adjust vertical alignment */
+        vertical-align: middle;
+        /* if ruby text contains text only
+         and there are two ruby annotations
+         (one placed above the base and one below)
+         then vertical centering roughly aligns baseline of
+         base with baseline of parent */
+        border-bottom: solid 0.75em transparent;
+        /* 0.75em is height of ruby text (0.5000d7 1.2em = 0.6em)
+         plus space between baseline and text-bottom (about 0.15em)
+         this extra border is counter-weight used
+         to restore vertical centering broken
+         by presence of ruby text
+         (in case if there is only one ruby annotation,
+         if there are two annotations
+         then counter-weight is no longer
+         necessary and can be annihilated
+         using border collapse mechanism) */
+    }
+
+    ruby > rt, rtc {
+        display: table-header-group;
+    }
+
+    ruby > rt {
+        font-size: 0.5em;
+        line-height: 1.2em;
+    }
+
+    rp {
+        display: none;
+    }
+
+}
