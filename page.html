@@ -64,14 +64,15 @@
                         <!-- ko foreach: sections -->
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
                             <p>
-                                <code> {{ time | as_timestamp }}: </code>
+                                <code class="timestamp"> {{ time | as_timestamp }} </code>
                                 <span data-bind="html: text.as_html"></span>
                             </p>
                         </div>
                         <!-- /ko -->
-                        <div class="json">
-                            <textarea style="width: 100%; height: 400px" data-bind="value: as_json"></textarea>
-                        </div>
+                    </div>
+
+                    <div class="json">
+                        <textarea style="width: 100%; height: 400px" data-bind="value: as_json"></textarea>
                     </div>
                 </div>
 
