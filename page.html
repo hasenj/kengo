@@ -121,9 +121,9 @@
         </script>
 
         <script type="text/html" id="lesson_list_template">
-            <div data-bind="foreach: lessons">
-                <div>
-                    <a href="" data-bind="click: load, text: title"></a>
+            <div class="lessons_list" data-bind="foreach: lessons">
+                <div class="lesson_entry" data-bind="click: load">
+                    {{ title }}
                 </div>
             </div>
         </script>
