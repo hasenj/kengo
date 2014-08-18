@@ -108,7 +108,11 @@ define(function(require) {
         }
 
         self.to_html = function(text, use_collapse) {
-            return to_html(text, self, use_collapse);
+            try {
+                return to_html(text, self, use_collapse);
+            } catch(e) {
+                return text;
+            }
         }
 
     }
