@@ -673,16 +673,31 @@ define(function(require) {
         });
 
         self.saving = ko.observable(false);
+        self.saved = ko.observable(false);
+        self.saved.subscribe(function(yes) { // everytime we save, listen to changes and unset the flag!
+            if(yes) {
+                var change = self.as_json.subscribe(function() {
+                    self.saved(false);
+                    change.dispose();
+                });
+            }
+        });
+        self.saved(true); // start saved
+
         self.save = function() {
             var url = "/api/lesson/" + slug;
             var data = self.export_data();
             self.saving(true);
+            self.saved(true); // be optimistic!
             req.put(url, data).then(function() {
                 self.saving(false);
+            }).catch(function() {
+                self.saving(false);
+                self.saved(false); // our optimism was wrong!
             });
         }
         self.save_enabled = ko.computed(function() {
-            return !self.saving();
+            return !self.saving() && !self.saved();
         });
         self.save_text = ko.computed(function() {
             if(self.save_enabled()) {
@@ -690,6 +705,9 @@ define(function(require) {
             }
             if(self.saving()) {
                 return "Saving ..";
+            }
+            if(self.saved()) {
+                return "Saved!";
             }
             return "Save"; // defaule
         });
