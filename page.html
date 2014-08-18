@@ -58,7 +58,7 @@
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
                             <p>
                                 <code> {{ time | as_timestamp }}: </code>
-                                {{ text }}
+                                <span data-bind="html: text.as_html"></span>
                             </p>
                         </div>
                         <!-- /ko -->
@@ -78,14 +78,14 @@
                             <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
                         </div>
                         <div class="text" data-bind="visible: $parent.note_edit_mode.is_off">
-                            {{ text }}
+                            <span data-bind="html: text.as_html"></span>
                         </div>
                         <div class="text_editor">
                             <textarea data-bind="value: text, valueUpdate: 'input', visible: $parent.note_edit_mode.is_on"></textarea>
                         </div>
                         <div class="notes" data-bind="foreach: notes">
                             <div class="note">
-                                {{ text }}
+                                <span data-bind="html: text.as_html"></span>
                             </div>
                         </div>
                     </div>

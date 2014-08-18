@@ -176,6 +176,17 @@ define(function(require) {
         return as_ts(ko.unwrap(seconds));
     }
 
+    function breaklines(str) {
+        return str.replace(new RegExp('\r?\n','g'), '<br />'); // http://stackoverflow.com/a/14369585/35364
+    }
+
+    var make_parsable = function(text) {
+        text.as_html = ko.computed(function() {
+            return breaklines(furigana.to_html(ko.unwrap(text)));
+        });
+    }
+
+
     // ctor for media player
     // @param element: the html5 video element
     var Player = function(element) {
@@ -460,6 +471,7 @@ define(function(require) {
             var self = this;
             self.time = ko.observable(parse_ts(data.time));
             self.text = ko.observable(data.text);
+            make_parsable(self.text);
 
             self.lesson = lesson; // for templates (views)
 
@@ -470,6 +482,7 @@ define(function(require) {
             var SectionNote = function(data) { // ctor
                 var self = this;
                 self.text = ko.observable(data);
+                make_parsable(self.text);
 
                 // SectionNote.export_data
                 self.export_data = function() {
