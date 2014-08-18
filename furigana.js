@@ -64,15 +64,15 @@ define(function(require) {
         }
 
         // convert plain text to a more complicated data structure: an array of
-        //     { char, ruby }
+        //     { text, ruby }
         // where ruby is optional
         self.parse = function(text) {
 
-            // given a list of kanji and ruby, zip them into a list of { char, ruby } objects
+            // given a list of kanji and ruby, zip them into a list of { text, ruby } objects
             var items = function(kanji, ruby) {
                 var result = [];
                 for(var i = 0; i < kanji.length; i++) {
-                    var object = { char: kanji[i] };
+                    var object = { text: kanji[i] };
                     if(i < ruby.length) {
                         object.ruby = ruby[i];
                     }
@@ -82,7 +82,7 @@ define(function(require) {
             }
 
             var result = [];
-            var waiting = []; // a line for chars waiting for their ruby
+            var waiting = []; // a line for text(s) waiting for their ruby
             var iter = new Iterator(text);
             while(true) {
                 if(iter.ended()) {
@@ -93,10 +93,10 @@ define(function(require) {
                     var ruby = grab_ruby(iter);
                     var boundary = waiting.length - ruby.length;
                     if(boundary < 0) {
-                        throw "Malformed string: more furigana chars than kanji!"
+                        throw "Malformed string: more furigana parts than kanji!"
                     }
-                    var chars = waiting.slice(0, boundary);
-                    result = result.concat(items(chars, []));
+                    var text = waiting.slice(0, boundary);
+                    result = result.concat(items(text, []));
                     // zip together the ruby with the remaining waiting items
                     var kanji = waiting.slice(boundary);
                     result = result.concat(items(kanji, ruby));
@@ -106,6 +106,11 @@ define(function(require) {
                 }
             }
         }
+
+        self.to_html = function(text, use_collapse) {
+            return to_html(text, self, use_collapse);
+        }
+
     }
 
     var parser = new FuriganaParser("【", "・", "】");
@@ -126,32 +131,75 @@ define(function(require) {
     test_parser("この大学【だい・がく】");
     test_parser("学【が・く】"); // malformed
 
-    var to_html = function(text, parser) {
+    // collapse the parse result so that blocks of rubied text come together, and blocks of unrubied text come together
+    // this will loose the relatinship between the kanji and its reading, but that's kinda ok
+    // XXX maybe instead of using this approach, let the parser return the items grouped .. this would be more robust and allow adjacent groups
+    var collapse = function(parse_result) {
+        var result = [];
+        var buffer = [];
+        var type = function(item) { // doesn't matter what it returns, as long as it returns something different for ruby and non-ruby items
+            if(item.ruby) { return 1; }
+            return 2;
+        }
+        var curr_type = null;
+        var cursor = 0;
+        var collapse_buffer = function(buffer) {
+            return u.reduce(buffer, function(item, item2) {
+                var text = item.text + item2.text;
+                var ruby;
+                if(item.ruby && item2.ruby) {
+                    ruby = item.ruby + item2.ruby;
+                }
+                return { text: text, ruby: ruby }
+            });
+        }
+        var flush = function() {
+            if(buffer.length) {
+                result.push(collapse_buffer(buffer));
+                buffer = [];
+            }
+        }
+        while(true) {
+            if(cursor >= parse_result.length) { // flush current buffer
+                flush();
+                return result;
+            }
+            var item = parse_result[cursor];
+            if(type(item) !== curr_type) { // flush current buffer
+                flush();
+            }
+            buffer.push(item);
+            curr_type = type(item);
+            cursor++;
+        }
+    }
+
+    var to_html = function(text, parser, use_collapse) {
         var parse = parser.parse(text);
+        if(use_collapse) {
+            parse = collapse(parse);
+        }
         var html_parts = u.map(parse, function(item) {
             if(item.ruby) {
-                return "<ruby>" + item.char + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>" + "</ruby>";
+                return "<ruby>" + item.text + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>" + "</ruby>";
             } else {
-                return item.char;
+                return item.text;
             }
         });
         return html_parts.join("");
     }
 
-    function test_conversion(text) {
-        console.log("Converting:", text);
-        try {
-            console.log(to_html(text, parser));
-        } catch (e) {
-            console.log(e);
-        }
+    function test_conversion(text, use_collapse) {
+        console.log("Converting:", text, use_collapse? "with collapsed furigana" : "");
+        console.log(parser.to_html(text, use_collapse));
     }
 
     test_conversion("hello");
     test_conversion("隣【となり】");
     test_conversion("大学【だい・がく】");
-    test_conversion("この大学【だい・がく】");
-    test_conversion("学【が・く】"); // malformed
+    test_conversion("hello\nこの大学【だい・がく】");
+    test_conversion("hello\nこの大学【だい・がく】", true);
+    // test_conversion("学【が・く】"); // malformed
 
     return parser;
 });
