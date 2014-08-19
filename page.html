@@ -42,6 +42,9 @@
                         </p>
                         <div class="controls">
                             <div class="group">
+                                <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
+                            </div>
+                            <div class="group">
                                 <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
                                 <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
                             </div>
@@ -60,7 +63,7 @@
                         </div>
                     </div>
 
-                    <div class="sections">
+                    <div class="sections" data-bind="css.no_furigana: furigana_visible.is_off">
                         <!-- ko foreach: sections -->
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
                             <p>
