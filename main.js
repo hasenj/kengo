@@ -186,6 +186,33 @@ define(function(require) {
         });
     }
 
+    // binding to make textarea autoresize
+    // based on: http://stackoverflow.com/a/5346855/35364 (also: http://jsfiddle.net/hmelenok/WM6Gq/ )
+    // usage:
+    //  <textarea data-bind="...., textarea_autosize: ob"> ....
+    // The parameter passed is optional, if observable, it's subscribed to and
+    // used to trigger resize event.  It should be an observable that's related
+    // to the visibility of the textarea, since the computation will fail if
+    // the element is hidden
+    ko.bindingHandlers.textarea_autosize = {
+        init: function(element, valueAccessor) {
+            var resize = function() {
+                element.style.height = 'auto';
+                element.style.height = element.scrollHeight+'px';
+            };
+            element.addEventListener('input', resize);
+            element.addEventListener('change', resize);
+            resize();
+            var ob = valueAccessor();
+            if(ko.isObservable(ob)) {
+                var sub = ob.subscribe(resize);
+                // clear that when element is gone!
+                ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                    sub.dispose();
+                });
+            }
+        }
+    }
 
     // ctor for media player
     // @param element: the html5 video element

@@ -107,9 +107,9 @@
                         </div>
                         <div class="text_editor" data-bind="visible: $parent.note_edit_mode.is_on">
                             <label>Text:</label>
-                            <textarea data-bind="value: text, valueUpdate: 'input'"></textarea>
+                            <textarea data-bind="value: text, valueUpdate: 'input', textarea_autosize: $parent.note_edit_mode.is_on"></textarea>
                             <label>Notes:</label>
-                            <textarea data-bind="value: notes, valueUpdate: 'input'"></textarea>
+                            <textarea data-bind="value: notes, valueUpdate: 'input', textarea_autosize: $parent.note_edit_mode.is_on"></textarea>
                         </div>
                     </div>
                 </div>
