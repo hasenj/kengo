@@ -474,7 +474,7 @@ define(function(require) {
 
                 time: time stamp, e.g. 11:23.2
                 text: string
-                notes: list of strings (optional)
+                notes: string (optional)
          */
         var Section = function(data) { // ctor
             var self = this;
@@ -482,24 +482,10 @@ define(function(require) {
             self.text = ko.observable(data.text);
             make_parsable(self.text);
 
+            self.notes = ko.observable(data.notes || "");
+            make_parsable(self.notes);
+
             self.lesson = lesson; // for templates (views)
-
-            var section = self;
-            /**
-                json format: string; plain text!
-             */
-            var SectionNote = function(data) { // ctor
-                var self = this;
-                self.text = ko.observable(data);
-                make_parsable(self.text);
-
-                // SectionNote.export_data
-                self.export_data = function() {
-                    return self.text();
-                }
-            }
-
-            self.notes = ko.observableArray(u.map(data.notes, ctor_fn(SectionNote)));
 
             // when a user clicks section, seek video to its time
             self.click = function() {
@@ -542,8 +528,8 @@ define(function(require) {
                 var out = {};
                 out.time = as_ts(self.time());
                 out.text = self.text();
-                if(self.notes().length) {
-                    out.notes = u.invoke(self.notes(), 'export_data');
+                if(self.notes()) {
+                    out.notes = self.notes();
                 }
                 return out;
             }
@@ -639,7 +625,7 @@ define(function(require) {
         }
         self.insert_new_section = function(time) {
             // find the index where must insert this new section
-            var new_section = new Section({time: as_ts(time), text: "", notes: []});
+            var new_section = new Section({time: as_ts(time), text: "", notes: ""});
             self.sections_list.push(new_section);
             self.jump_to_section(new_section);
             self.note_edit_mode.turn_on();

@@ -97,16 +97,19 @@
                                 <button data-bind="click: lesson.use_next_section, enable: lesson.next_section">Next &gt; </button>
                             </div>
                         </div>
-                        <div class="text" data-bind="visible: $parent.note_edit_mode.is_off">
-                            <span data-bind="html: text.as_html"></span>
-                        </div>
-                        <div class="text_editor">
-                            <textarea data-bind="value: text, valueUpdate: 'input', visible: $parent.note_edit_mode.is_on"></textarea>
-                        </div>
-                        <div class="notes" data-bind="foreach: notes">
-                            <div class="note">
+                        <div class="viewer" data-bind="visible: $parent.note_edit_mode.is_off">
+                            <div class="text">
                                 <span data-bind="html: text.as_html"></span>
                             </div>
+                            <div class="notes" data-bind="visible: notes">
+                                <span data-bind="html: notes.as_html"></span>
+                            </div>
+                        </div>
+                        <div class="text_editor" data-bind="visible: $parent.note_edit_mode.is_on">
+                            <label>Text:</label>
+                            <textarea data-bind="value: text, valueUpdate: 'input'"></textarea>
+                            <label>Notes:</label>
+                            <textarea data-bind="value: notes, valueUpdate: 'input'"></textarea>
                         </div>
                     </div>
                 </div>
