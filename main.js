@@ -1,11 +1,5 @@
 define(function(require) {
-    var ko = require('knockout');
-    require('knockout.mapping');
-    require('knockout.punches');
-    require('knockout-switch-case');
-    ko.punches.enableAll();
-
-    require('kobindings');
+    var ko = require('ko');
 
     var u = require('lodash');
     var req = require('request');
@@ -109,19 +103,6 @@ define(function(require) {
         return value;
     };
 
-    ko.extenders.notify_strict = function(target, yes) {
-        var strict_equality = function(a, b) {
-            return a === b;
-        };
-
-        if(yes) {
-            target["equalityComparer"] = strict_equality;
-        }
-
-        //return the original observable
-        return target;
-    };
-
     // a function to return a promise for when an observable become non-undefined and non-null
     // but without guarantee that it won't become undefined or null again!
     var after_init = function(observable) {
@@ -184,34 +165,6 @@ define(function(require) {
         text.as_html = ko.computed(function() {
             return breaklines(furigana.to_html(ko.unwrap(text)));
         });
-    }
-
-    // binding to make textarea autoresize
-    // based on: http://stackoverflow.com/a/5346855/35364 (also: http://jsfiddle.net/hmelenok/WM6Gq/ )
-    // usage:
-    //  <textarea data-bind="...., textarea_autosize: ob"> ....
-    // The parameter passed is optional, if observable, it's subscribed to and
-    // used to trigger resize event.  It should be an observable that's related
-    // to the visibility of the textarea, since the computation will fail if
-    // the element is hidden
-    ko.bindingHandlers.textarea_autosize = {
-        init: function(element, valueAccessor) {
-            var resize = function() {
-                element.style.height = 'auto';
-                element.style.height = element.scrollHeight+'px';
-            };
-            element.addEventListener('input', resize);
-            element.addEventListener('change', resize);
-            resize();
-            var ob = valueAccessor();
-            if(ko.isObservable(ob)) {
-                var sub = ob.subscribe(resize);
-                // clear that when element is gone!
-                ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
-                    sub.dispose();
-                });
-            }
-        }
     }
 
     // ctor for media player
