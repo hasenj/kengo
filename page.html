@@ -31,38 +31,29 @@
 
         <script type="text/html" id="lesson_template">
             <div class="lesson">
-                <div class="lesson_side">
-                    <div class="player">
-                        <h1 data-bind="text: title"></h1>
-
-                        <video controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
-
-                        <p>
-                            <code> Video Position: {{ video_time | as_timestamp }} </code>
-                        </p>
-                        <div class="controls">
-                            <div class="group">
-                                <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
-                                <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
-                                <button data-bind="click: backward_small, enable: video_paused"> <= </button>
-                                <button data-bind="click: forward_small, enable: video_paused"> => </button>
-                                <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: save, enable: save_enabled, text: save_text"></button>
-                            </div>
-                        </div>
+                <div id="top_controls" class="controls">
+                    <div class="group">
+                        <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
                     </div>
-
+                    <div class="group">
+                        <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
+                        <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
+                    </div>
+                    <div class="group">
+                        <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
+                        <button data-bind="click: backward_small, enable: video_paused"> <= </button>
+                        <button data-bind="click: forward_small, enable: video_paused"> => </button>
+                        <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
+                    </div>
+                    <div class="group">
+                        <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
+                    </div>
+                    <div class="group">
+                        <button data-bind="click: save, enable: save_enabled, text: save_text"></button>
+                    </div>
+                </div>
+                <div class="lesson_text">
+                    <h1 data-bind="text: title"></h1>
                     <div class="sections" data-bind="css.no_furigana: furigana_visible.is_off">
                         <!-- ko foreach: sections -->
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
@@ -79,7 +70,15 @@
                     </div>
                 </div>
 
-                <div class="notes_side">
+                <div class="lesson_notes">
+                    <div class="player">
+                        <video controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
+                        <!--
+                        <p>
+                            <code> Video Position: {{ video_time | as_timestamp }} </code>
+                        </p>
+                        -->
+                    </div>
                     <div class="current_notes" data-bind="with: current_section">
                         <div class="controls">
                             <div class="group">
@@ -101,9 +100,11 @@
                             </div>
                         </div>
                         <div class="viewer" data-bind="visible: $parent.note_edit_mode.is_off">
-                            <div class="text">
-                                <span data-bind="html: text.as_html"></span>
-                            </div>
+                            <!--
+                                <div class="text">
+                                    <span data-bind="html: text.as_html"></span>
+                                </div>
+                            -->
                             <div class="notes" data-bind="visible: notes">
                                 <span data-bind="html: notes.as_html"></span>
                             </div>
