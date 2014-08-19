@@ -123,22 +123,6 @@ define(function(require) {
 
     var parser = new FuriganaParser("【", "・", "】");
 
-    // some tests!!
-    function test_parser(text) {
-        console.log("Parsing:", text);
-        try {
-            console.log(JSON.stringify(parser.parse(text), null, 4));
-        } catch(e) {
-            console.log(e);
-        }
-    }
-
-    test_parser("hello");
-    test_parser("隣【となり】");
-    test_parser("大学【だい・がく】");
-    test_parser("この大学【だい・がく】");
-    test_parser("学【が・く】"); // malformed
-
     var to_html = function(text, parser, use_collapse) {
         var parse = parser.parse(text);
         var collapse_group = function(group) {
@@ -171,18 +155,41 @@ define(function(require) {
         return html_parts.join("");
     }
 
-    function test_conversion(text, use_collapse) {
-        console.log("Converting:", text, use_collapse? "with collapsed furigana" : "");
-        console.log(to_html(text, parser, use_collapse));
+    FuriganaParser.prototype.run_tests = function() {
+        var parser = this;
+
+        // some tests!!
+        function test_parser(text) {
+            console.log("Parsing:", text);
+            try {
+                console.log(JSON.stringify(parser.parse(text), null, 4));
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        test_parser("hello");
+        test_parser("隣【となり】");
+        test_parser("大学【だい・がく】");
+        test_parser("この大学【だい・がく】");
+        test_parser("学【が・く】"); // malformed
+
+        function test_conversion(text, use_collapse) {
+            console.log("Converting:", text, use_collapse? "with collapsed furigana" : "");
+            console.log(to_html(text, parser, use_collapse));
+        }
+
+        console.log("\n\nTesting html conversion\n-------------------------------------");
+        test_conversion("hello");
+        test_conversion("隣【となり】");
+        test_conversion("大学【だい・がく】");
+        test_conversion("hello\nこの大学【だい・がく】");
+        test_conversion("hello\nこの大学【だい・がく】", true);
+        // test_conversion("学【が・く】"); // malformed
+
     }
 
-    console.log("\n\nTesting html conversion\n-------------------------------------");
-    test_conversion("hello");
-    test_conversion("隣【となり】");
-    test_conversion("大学【だい・がく】");
-    test_conversion("hello\nこの大学【だい・がく】");
-    test_conversion("hello\nこの大学【だい・がく】", true);
-    // test_conversion("学【が・く】"); // malformed
+    parser.run_tests(); // TEMP
 
     return parser;
 });

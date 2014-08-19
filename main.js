@@ -161,6 +161,7 @@ define(function(require) {
         return str.replace(new RegExp('\r?\n','g'), '<br />'); // http://stackoverflow.com/a/14369585/35364
     }
 
+    // furigana parsing - attach `to_html` computed to the observable that represents the htmlized version of it!
     var make_parsable = function(text) {
         text.as_html = ko.computed(function() {
             return breaklines(furigana.to_html(ko.unwrap(text)));
