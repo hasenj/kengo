@@ -154,7 +154,7 @@ define(function(require) {
             });
         }
         var item_inner_html = function(item) {
-            if(item.ruby) {
+            if('ruby' in item) {
                 return "<rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>";
             } else {
                 return item.text;
