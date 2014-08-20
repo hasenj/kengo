@@ -8,13 +8,15 @@
     }
 
     .lesson_notes {
-        padding: 20px 30px;
+        padding: 20px 10px;
         position: fixed;
         top: 70px;
         right: 0px;
         left: 760px;
         video {
             width: 400px;
+            position: fixed;
+            bottom: 0px;
         }
         .current_notes {
         }
@@ -41,7 +43,16 @@
     background-color: hsl(120, 20%, 95%);
     border-bottom: 1px solid silver;
     z-index: 100;
-    padding: 10px 20px;
+
+    .controls {
+        padding: 10px 20px;
+    }
+    .controls.global {
+        min-width: 700px;
+    }
+    .controls.section {
+        border-left: 1px solid silver;
+    }
 }
 
 #app-container {

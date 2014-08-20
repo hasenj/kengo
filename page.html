@@ -31,26 +31,49 @@
 
         <script type="text/html" id="lesson_template">
             <div class="lesson">
-                <div id="top_controls" class="controls">
-                    <div class="group">
-                        <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
+                <div id="top_controls">
+                    <div class="controls global">
+                        <div class="group">
+                            <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
+                            <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
+                            <button data-bind="click: backward_small, enable: video_paused"> <= </button>
+                            <button data-bind="click: forward_small, enable: video_paused"> => </button>
+                            <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: save, enable: save_enabled, text: save_text"></button>
+                        </div>
                     </div>
-                    <div class="group">
-                        <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
-                        <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
+                    <!-- ko with: current_section -->
+                    <div class="controls section">
+                        <div class="group">
+                            <!-- ko if: $parent.note_edit_mode.is_off -->
+                            <button data-bind="click: $parent.note_edit_mode.turn_on, enable: lesson.video_paused">Edit</button>
+                            <!-- /ko -->
+                            <!-- ko if: $parent.note_edit_mode.is_on -->
+                            <button data-bind="click: $parent.note_edit_mode.turn_off, enable: lesson.video_paused">View</button>
+                            <!-- /ko -->
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
+                            <button data-bind="click: jump_video_to_start"> |&lt; </button>
+                            <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
+                        </div>
+                        <div class="group">
+                            <button data-bind="click: lesson.use_prev_section, enable: lesson.prev_section"> &lt; Prev </button>
+                            <button data-bind="click: lesson.use_next_section, enable: lesson.next_section">Next &gt; </button>
+                        </div>
                     </div>
-                    <div class="group">
-                        <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
-                        <button data-bind="click: backward_small, enable: video_paused"> <= </button>
-                        <button data-bind="click: forward_small, enable: video_paused"> => </button>
-                        <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
-                    </div>
-                    <div class="group">
-                        <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
-                    </div>
-                    <div class="group">
-                        <button data-bind="click: save, enable: save_enabled, text: save_text"></button>
-                    </div>
+                    <!-- /ko -->
                 </div>
                 <div class="lesson_text">
                     <h1 data-bind="text: title"></h1>
@@ -80,25 +103,6 @@
                         -->
                     </div>
                     <div class="current_notes" data-bind="with: current_section">
-                        <div class="controls">
-                            <div class="group">
-                                <!-- ko if: $parent.note_edit_mode.is_off -->
-                                <button data-bind="click: $parent.note_edit_mode.turn_on, enable: lesson.video_paused">Edit</button>
-                                <!-- /ko -->
-                                <!-- ko if: $parent.note_edit_mode.is_on -->
-                                <button data-bind="click: $parent.note_edit_mode.turn_off, enable: lesson.video_paused">View</button>
-                                <!-- /ko -->
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
-                                <button data-bind="click: jump_video_to_start"> |&lt; </button>
-                                <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
-                            </div>
-                            <div class="group">
-                                <button data-bind="click: lesson.use_prev_section, enable: lesson.prev_section"> &lt; Prev </button>
-                                <button data-bind="click: lesson.use_next_section, enable: lesson.next_section">Next &gt; </button>
-                            </div>
-                        </div>
                         <div class="viewer" data-bind="visible: $parent.note_edit_mode.is_off">
                             <!--
                                 <div class="text">
