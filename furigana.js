@@ -1,6 +1,11 @@
 define(function(require) {
     var u = require('lodash');
 
+    var default_to = function(arg, def) {
+        if(typeof arg === "undefined") return def;
+        return arg;
+    }
+
     /**
         Rules:
 
@@ -17,14 +22,18 @@ define(function(require) {
             var self = this;
             var cursor = 0;
             self.peek = function(length) {
-                length = length || 1;
+                length = default_to(length, 1);
                 return text.substr(cursor, length);
             }
             self.consume = function(length) {
-                length = length || 1;
+                length = default_to(length, 1);
                 var ret = text.substr(cursor, length);
                 cursor += length;
                 return ret;
+            }
+            self.backtrack = function(length) {
+                length = default_to(length, 1);
+                cursor -= length;
             }
             // look for c, and tell how many steps to get there
             self.find = function(c) {
@@ -54,7 +63,9 @@ define(function(require) {
             }
             var len = iter.find(furigana_end);
             if(len == -1) {
-                throw "Parser Error: Malformed string"
+                // throw "Parser Error: Malformed string"
+                iter.backtrack(); // unconsume the furigana_start token
+                return null;
             }
             var ruby = iter.consume(len);
             if(iter.consume() !== furigana_end) {
@@ -93,6 +104,10 @@ define(function(require) {
                 }
                 if(iter.peek() == furigana_start) {
                     var ruby = grab_ruby(iter);
+                    if(ruby === null) { // means we did not find furigana here .. so treat this char normally!
+                        waiting.push(iter.consume());
+                        continue;
+                    }
                     var boundary = waiting.length - ruby.length;
                     if(boundary < 0) {
                         throw "Malformed string: more furigana parts than kanji!"
@@ -112,11 +127,14 @@ define(function(require) {
         }
 
         self.to_html = function(text) {
-            try {
-                return to_html(text, self);
-            } catch(e) {
-                return text;
-            }
+            var lines = text.split("\n");
+            return u.map(lines, function(line) {
+                try {
+                    return to_html(line, self);
+                } catch(e) {
+                    return line;
+                }
+            }).join("\n");
         }
 
     }
@@ -135,22 +153,26 @@ define(function(require) {
                 return { text: text, ruby: ruby }
             });
         }
-        var item_html = function(item) {
+        var item_inner_html = function(item) {
             if(item.ruby) {
-                return "<ruby>" + item.text + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>" + "</ruby>";
+                return "<rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>";
             } else {
                 return item.text;
             }
         }
         var html_parts = u.map(parse, function(group) {
+            if(group.length === 0) { return ""; };
+            var has_ruby = group[0].ruby;
+            var inner_html = "";
             if(use_collapse) {
                 var item = collapse_group(group);
-                return item_html(item);
+                inner_html = item_inner_html(item);
             } else {
-                return u.map(group, function(item) {
-                    return item_html(item);
+                inner_html = u.map(group, function(item) {
+                    return item_inner_html(item);
                 }).join("");
             }
+            return "<ruby>" + inner_html + "</ruby>";
         });
         return html_parts.join("");
     }
@@ -176,7 +198,8 @@ define(function(require) {
 
         function test_conversion(text, use_collapse) {
             console.log("Converting:", text, use_collapse? "with collapsed furigana" : "");
-            console.log(to_html(text, parser, use_collapse));
+            // console.log(to_html(text, parser, use_collapse));
+            console.log(parser.to_html(text, use_collapse));
         }
 
         console.log("\n\nTesting html conversion\n-------------------------------------");
