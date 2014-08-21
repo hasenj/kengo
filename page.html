@@ -13,10 +13,6 @@
     <body>
 
         <div id="app-container"> <!-- bound to app -->
-            <div id="topbar">
-                <button data-bind="click: loadLessonList">Lesson List</button>
-                <button data-bind="click: newLesson">New Lesson</button>
-            </div>
             <!-- ko if: loading -->
                 Loading .....
             <!-- /ko -->
@@ -33,6 +29,9 @@
             <div class="lesson">
                 <div id="top_controls">
                     <div class="controls global">
+                        <div class="group">
+                            <button data-bind="click: app.loadLessonList">Lesson List</button>
+                        </div>
                         <div class="group">
                             <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
                         </div>
@@ -157,6 +156,7 @@
         </script>
 
         <script type="text/html" id="lesson_list_template">
+            <button class="new_lesson" data-bind="click: app.newLesson">New Lesson</button>
             <div class="lessons_list" data-bind="foreach: lessons">
                 <div class="lesson_entry" data-bind="click: load">
                     {{ title }}
