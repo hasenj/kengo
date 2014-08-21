@@ -33,9 +33,6 @@
                             <button data-bind="click: app.loadLessonList">Lesson List</button>
                         </div>
                         <div class="group">
-                            <button data-bind="click: furigana_visible.toggle, text: furigana_toggle_text"></button>
-                        </div>
-                        <div class="group">
                             <button data-bind="click: video_back_peek, enable: video_paused"> ?-] </button>
                             <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
                         </div>
@@ -76,6 +73,14 @@
                 </div>
                 <div class="lesson_text">
                     <h1 data-bind="text: title"></h1>
+                    <div class="controls side vertical">
+                        <div class="group">
+                            <button class="toggle" data-bind="click: furigana_visible.toggle, css.is_off: furigana_visible.is_off"><ruby><rb>F</rb><rt>f</rt></ruby></button>
+                        </div>
+                        <div class="group">
+                            <button class="toggle" data-bind="click: video_visible.toggle, css.is_off: video_visible.is_off">Vid</button>
+                        </div>
+                    </div>
                     <div class="sections" data-bind="css.no_furigana: furigana_visible.is_off">
                         <!-- ko foreach: sections -->
                         <div class="section" data-bind="click: click, css.current: $parent.current_section() == $data">
@@ -95,7 +100,7 @@
                 </div>
 
                 <div class="lesson_notes">
-                    <div class="player">
+                    <div class="player" data-bind="visible: video_visible">
                         <video controls="controls" data-bind="attr.src: video_source, element: video_element"> </video>
                         <!--
                         <p>

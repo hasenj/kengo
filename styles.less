@@ -84,10 +84,29 @@
                 border-bottom-right-radius: 3px;
                 border-right-width: 1px;
             }
+
+            &.toggle {
+                width: 30px;
+                &, &.is_on {
+                    background-color: hsl(120, 70%, 80%);
+                }
+                &.is_off {
+                    background-color: hsl(0, 70%, 80%);
+                }
+            }
+        }
+    }
+
+    &.vertical.side {
+        button {
+            border-top-left-radius: 0px;
+            border-bottom-left-radius: 0px;
+        }
+        .group {
+            margin-top: 10px;
         }
     }
 }
-
 
 .lessons_list {
     font-size: 30pt;

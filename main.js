@@ -385,10 +385,7 @@ define(function(require) {
         self.video_paused = ko.observable(true);
         self.player = null;
         self.furigana_visible = flag(true);
-        self.furigana_toggle_text = ko.computed(function() {
-            if(self.furigana_visible()) { return "Hide Furigana"; }
-            return "Show Furigana";
-        });
+        self.video_visible = flag(true);
 
         // video management .. "think" function for video player
         after_init(self.video_element).then(function() {
