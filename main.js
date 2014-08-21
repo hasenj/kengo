@@ -4,6 +4,7 @@ define(function(require) {
     var u = require('lodash');
     var req = require('request');
     var furigana = require('furigana')
+    var shortcuts = require('shortcuts');
 
     var Application = function() {
         var self = this;
@@ -22,6 +23,7 @@ define(function(require) {
                 self.error(null);
                 self.lesson(new Lesson(lesson_slug, data));
                 self.item(self.lesson()); // set as the page item!
+                shortcuts.setupLessonShortcuts(self.lesson());
             }).catch(function(error) {
                 self.loading_items.pop();
                 self.lesson(null);
@@ -201,6 +203,13 @@ define(function(require) {
         }
         self.pause = function() {
             element.pause();
+        }
+        self.toggle_play_pause = function() {
+            if(self.paused()) {
+                self.play();
+            } else {
+                self.pause();
+            }
         }
         self.seek = function(time) {
             element.currentTime = time;
