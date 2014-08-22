@@ -164,9 +164,60 @@ define(function(require) {
     }
 
     // furigana parsing - attach `to_html` computed to the observable that represents the htmlized version of it!
+    // XXX make this choose a different parser depending on the language of the lesson!
     var make_parsable = function(text) {
         text.as_html = ko.computed(function() {
             return breaklines(furigana.to_html(ko.unwrap(text)));
+        });
+    }
+
+    // loosely based on http://stackoverflow.com/a/8918062
+    // returns a promise that's fulfilled when done, or rejected if interrupted
+    function scrollTo(element, to, duration) {
+        if (duration < 0) {
+            return Promise.reject("bad duration");
+        }
+        if (duration === 0) {
+            element.scrollTop = to;
+            return Promise.resolve();
+        }
+        return new Promise(function(resolve, reject) {
+            var tick = 14;
+            var difference = to - element.scrollTop;
+            var perTick = Math.ceil(difference / duration * tick);
+
+            var previous_top = element.scrollTop;
+
+            var scroll_frame = function() {
+                if(element.scrollTop != previous_top) {
+                    console.log("animation interrupted; aborting");
+                    reject("interrupted");
+                    return;
+                }
+                var frame_target = element.scrollTop + perTick;
+                frame_target = Math.min(to, frame_target); // don't allow it to go past target
+                console.log("scrolling to:", frame_target);
+                element.scrollTop = frame_target;
+
+                if(element.scrollTop === previous_top) {
+                    // didn't go through - we probably hit the limit
+                    // consider it done instead of interrupted
+                    resolve();
+                    return;
+                }
+                previous_top = element.scrollTop;
+                if (element.scrollTop > to) { // shouldn't happen - but for completeness
+                    element.scrollTop = to;
+                    resolve();
+                    return;
+                }
+                if (element.scrollTop === to) {
+                    resolve();
+                    return;
+                }
+                setTimeout(scroll_frame, tick);
+            }
+            setTimeout(scroll_frame, 0);
         });
     }
 
@@ -477,6 +528,8 @@ define(function(require) {
             self.notes = ko.observable(data.notes || "");
             make_parsable(self.notes);
 
+            self.element = constant(null);
+
             self.lesson = lesson; // for templates (views)
 
             // when a user clicks section, seek video to its time
@@ -552,14 +605,45 @@ define(function(require) {
             }
         });
 
-        // debug
-        invoke(function() { // IIFE
-            var previous_section = self.current_section();
-            self.current_section.subscribe(function(section) {
-                console.log("New section .. are they equal?", section === previous_section);
-                previous_section = section;
-            });
+        self.current_section_element = ko.computed(function() {
+            var s = self.current_section();
+            if(!s) { return null; }
+            return s.element();
         });
+        self.auto_scroll = flag(true);
+
+        // auto scroll!
+        self.current_section_element.subscribe(function(element) {
+            if(!element) { return; }
+            if(self.auto_scroll.is_off()) { return; }
+
+            var rect = element.getBoundingClientRect();
+            var offset_to_bottom = window.innerHeight - rect.bottom;
+            var offset_to_top = rect.top;
+            console.log("offset to bottom:", offset_to_bottom);
+            window.ex = element;
+            // enforce some minimum bottom offset
+            var threshold = 50;
+            var scroll_offset = 200;
+            if(offset_to_bottom < threshold) {
+                var shift = scroll_offset - offset_to_bottom;
+                var target = document.body.scrollTop + shift;
+                console.log("scrolling to:", target);
+                scrollTo(document.body, target, 200);
+            }
+
+        });
+
+        // debug
+        if(false) {
+            invoke(function() { // IIFE
+                var previous_section = self.current_section();
+                self.current_section.subscribe(function(section) {
+                    // console.log("New section .. are they equal?", section === previous_section);
+                    previous_section = section;
+                });
+            });
+        }
 
         // find section after given one
         self.find_next_section = function(section) {
