@@ -173,7 +173,7 @@ define(function(require) {
 
     // loosely based on http://stackoverflow.com/a/8918062
     // returns a promise that's fulfilled when done, or rejected if interrupted
-    function scrollTo(element, target, duration) {
+    function smooth_scroll_to(element, target, duration) {
         target = Math.round(target);
         duration = Math.round(duration);
         console.log("scrolling to target:", target);
@@ -189,6 +189,7 @@ define(function(require) {
         var end_time = start_time + duration;
 
         var start_top = element.scrollTop;
+        var difference = target - start_top;
 
         // based on http://en.wikipedia.org/wiki/Smoothstep
         var smooth_step = function(start, end, point) {
@@ -200,9 +201,6 @@ define(function(require) {
         }
 
         return new Promise(function(resolve, reject) {
-            var tick = 1;
-            var difference = target - element.scrollTop;
-            var perTick = Math.ceil(difference / duration * tick);
 
             var previous_top = element.scrollTop;
 
@@ -215,10 +213,10 @@ define(function(require) {
                 var now = Date.now();
                 // debugger;
                 var point = smooth_step(start_time, end_time, now);
-                console.log("point now is:", point);
+                // console.log("point now is:", point);
                 var frame_target = Math.round(start_top + (difference * point));
                 frame_target = Math.min(target, frame_target); // don't allow it to go past target
-                console.log("scrolling to:", frame_target);
+                // console.log("scrolling to:", frame_target);
                 element.scrollTop = frame_target;
 
                 if(now >= end_time) {
@@ -227,19 +225,19 @@ define(function(require) {
                     return;
                 }
 
-                /*
                 // if we were supposed to scroll but didn't ..
                 if(element.scrollTop === previous_top && element.scrollTop !== frame_target) {
                     // didn't go through - we probably hit the limit
                     // consider it done instead of interrupted
+                    console.log("Expected:", frame_target, "but found:", previous_top);
                     console.log("didn't go through - assuming done!");
                     resolve();
                     return;
                 }
-                */
                 previous_top = element.scrollTop;
 
                 if (element.scrollTop > target) { // shouldn't happen - but for completeness
+                    console.log("scroll top > target");
                     element.scrollTop = target;
                     resolve();
                     return;
@@ -248,7 +246,7 @@ define(function(require) {
                     resolve();
                     return;
                 }
-                setTimeout(scroll_frame, tick);
+                setTimeout(scroll_frame, 0); // tick
             }
             setTimeout(scroll_frame, 0);
         });
@@ -645,6 +643,25 @@ define(function(require) {
         });
         self.auto_scroll = flag(true);
 
+        var get_scrolling_element = u.once(function() {
+            var original = window.scrollY;
+            var test_target = 100;
+            if(test_target == original) {
+                test_target = 50;
+            }
+            var element = null;
+            // do a test scroll
+            window.scrollTo(0, 100);
+            if(document.body.scrollTop == test_target) {
+                element = document.body;
+            }
+            if(document.documentElement.scrollTop == test_target) {
+                element = document.documentElement;
+            }
+            window.scrollTo(0, original); // restore
+            return element;
+        });
+
         // auto scroll!
         self.current_section_element.subscribe(function(element) {
             if(!element) { return; }
@@ -659,11 +676,11 @@ define(function(require) {
             var threshold = 50;
             var target_bottom_offset = Math.round(window.innerHeight * 0.3); // the value we want for the bottom offset
             if(offset_to_bottom < threshold) {
+                var cont = get_scrolling_element();
                 var shift = target_bottom_offset - offset_to_bottom;
-                var target = document.body.scrollTop + shift;
-                console.log("scrolling to:", target);
-                var duration = shift * 2;
-                scrollTo(document.body, target, duration).then(function() {
+                var target = cont.scrollTop + shift;
+                var duration = shift * 3; // 3 seconds per 1000 pixels
+                smooth_scroll_to(cont, target, duration).then(function() {
                     console.log("Scrolling done");
                 }).catch(function(e){
                     console.log("Scrolling aborted:", e);
