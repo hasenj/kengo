@@ -155,7 +155,7 @@ define(function(require) {
         }
         var ruby_item_html = function(item) {
             if('ruby' in item) {
-                return "<ruby><rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp></ruby>";
+                return "<ruby><rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + (item.ruby || "&nbsp;") + "</rt>" + "<rp>)</rp></ruby>";
             }
         }
         var html_parts = u.map(parse, function(group) {
