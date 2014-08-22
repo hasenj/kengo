@@ -153,26 +153,30 @@ define(function(require) {
                 return { text: text, ruby: ruby }
             });
         }
-        var item_inner_html = function(item) {
+        var ruby_item_html = function(item) {
             if('ruby' in item) {
-                return "<rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp>";
-            } else {
-                return item.text;
+                return "<ruby><rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + item.ruby + "</rt>" + "<rp>)</rp></ruby>";
             }
         }
         var html_parts = u.map(parse, function(group) {
             if(group.length === 0) { return ""; };
-            var has_ruby = group[0].ruby;
-            var inner_html = "";
+            var has_ruby = 'ruby' in group[0];
             if(use_collapse) {
                 var item = collapse_group(group);
-                inner_html = item_inner_html(item);
+                if(item.ruby) {
+                    return ruby_item_html(item);
+                } else {
+                    return "<ruby>" + item.text + "</ruby>";
+                }
             } else {
-                inner_html = u.map(group, function(item) {
-                    return item_inner_html(item);
-                }).join("");
+                if(has_ruby) {
+                    return u.map(group, function(item) {
+                        return ruby_item_html(item);
+                    }).join("");
+                } else {
+                    return "<ruby>" + u.pluck(group, 'text').join("") + "</ruby>";
+                }
             }
-            return "<ruby>" + inner_html + "</ruby>";
         });
         return html_parts.join("");
     }
