@@ -173,17 +173,35 @@ define(function(require) {
 
     // loosely based on http://stackoverflow.com/a/8918062
     // returns a promise that's fulfilled when done, or rejected if interrupted
-    function scrollTo(element, to, duration) {
+    function scrollTo(element, target, duration) {
+        target = Math.round(target);
+        duration = Math.round(duration);
+        console.log("scrolling to target:", target);
         if (duration < 0) {
             return Promise.reject("bad duration");
         }
         if (duration === 0) {
-            element.scrollTop = to;
+            element.scrollTop = target;
             return Promise.resolve();
         }
+
+        var start_time = Date.now();
+        var end_time = start_time + duration;
+
+        var start_top = element.scrollTop;
+
+        // based on http://en.wikipedia.org/wiki/Smoothstep
+        var smooth_step = function(start, end, point) {
+            if(point <= start) { return 0; }
+            if(point >= end) { return 1; }
+            var x = (point - start) / (end - start); // interpolation
+            return x*x*(3 - 2*x);
+            // return x*x*x*(x*(x*6 - 15) + 10);
+        }
+
         return new Promise(function(resolve, reject) {
-            var tick = 14;
-            var difference = to - element.scrollTop;
+            var tick = 1;
+            var difference = target - element.scrollTop;
             var perTick = Math.ceil(difference / duration * tick);
 
             var previous_top = element.scrollTop;
@@ -194,24 +212,39 @@ define(function(require) {
                     reject("interrupted");
                     return;
                 }
-                var frame_target = element.scrollTop + perTick;
-                frame_target = Math.min(to, frame_target); // don't allow it to go past target
+                var now = Date.now();
+                // debugger;
+                var point = smooth_step(start_time, end_time, now);
+                console.log("point now is:", point);
+                var frame_target = Math.round(start_top + (difference * point));
+                frame_target = Math.min(target, frame_target); // don't allow it to go past target
                 console.log("scrolling to:", frame_target);
                 element.scrollTop = frame_target;
 
-                if(element.scrollTop === previous_top) {
+                if(now >= end_time) {
+                    console.log("time over - done");
+                    resolve();
+                    return;
+                }
+
+                /*
+                // if we were supposed to scroll but didn't ..
+                if(element.scrollTop === previous_top && element.scrollTop !== frame_target) {
                     // didn't go through - we probably hit the limit
                     // consider it done instead of interrupted
+                    console.log("didn't go through - assuming done!");
                     resolve();
                     return;
                 }
+                */
                 previous_top = element.scrollTop;
-                if (element.scrollTop > to) { // shouldn't happen - but for completeness
-                    element.scrollTop = to;
+
+                if (element.scrollTop > target) { // shouldn't happen - but for completeness
+                    element.scrollTop = target;
                     resolve();
                     return;
                 }
-                if (element.scrollTop === to) {
+                if (element.scrollTop === target) {
                     resolve();
                     return;
                 }
@@ -624,12 +657,17 @@ define(function(require) {
             window.ex = element;
             // enforce some minimum bottom offset
             var threshold = 50;
-            var scroll_offset = 200;
+            var target_bottom_offset = Math.round(window.innerHeight * 0.3); // the value we want for the bottom offset
             if(offset_to_bottom < threshold) {
-                var shift = scroll_offset - offset_to_bottom;
+                var shift = target_bottom_offset - offset_to_bottom;
                 var target = document.body.scrollTop + shift;
                 console.log("scrolling to:", target);
-                scrollTo(document.body, target, 200);
+                var duration = shift * 2;
+                scrollTo(document.body, target, duration).then(function() {
+                    console.log("Scrolling done");
+                }).catch(function(e){
+                    console.log("Scrolling aborted:", e);
+                });
             }
 
         });
