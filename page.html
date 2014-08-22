@@ -89,7 +89,7 @@
                         <div class="section" data-bind="click: click, element: element, css.current: $parent.current_section() == $data">
                             <p>
                                 <code class="timestamp"> {{ time | as_timestamp }} </code>
-                                <span data-bind="html: text.as_html"></span>
+                                {{{ text.as_html | default:"&nbsp;" }}}
                             </p>
                         </div>
                         <!-- /ko -->
