@@ -517,6 +517,7 @@ define(function(require) {
                 var cont = get_scrolling_element();
                 var target = cont.scrollTop + shift;
                 var duration = Math.abs(shift) * 3; // 3 seconds per 1000 pixels
+                duration = Math.min(duration, 600);
                 utils.smooth_scroll_to(cont, target, duration).then(function() {
                     console.log("Scrolling done");
                 }).catch(function(e){
