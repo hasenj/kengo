@@ -216,7 +216,7 @@ define(function(require) {
 
     }
 
-    parser.run_tests(); // TEMP
+    // parser.run_tests(); // TEMP
 
     return parser;
 });
