@@ -1,8 +1,9 @@
 define(function(require) {
     var ko = require('ko');
-
     var u = require('lodash');
+
     var req = require('request');
+    var utils = require('utils');
     var furigana = require('furigana')
     var shortcuts = require('shortcuts');
 
@@ -49,80 +50,6 @@ define(function(require) {
         self.item = ko.observable();
     };
 
-    // to make IIFE's more readable
-    var invoke = function(fn) {
-        fn();
-    }
-
-    // proxy
-    // useful for passing constructors to u.map
-    var ctor_fn = function(ctor) {
-        return function() {
-            var object = Object.create(ctor.prototype);
-            ctor.apply(object, arguments);
-            return object;
-        }
-    }
-
-    var is_initialized = function(value) {
-        return (typeof value !== "undefined" && value !== null);
-    }
-
-    // similar to observable, but can't be changed once initialized!
-    var constant = function(init) {
-        var value = ko.observable(init);
-        return ko.computed({
-            read: function() {
-                return value();
-            },
-            write: function(nv) {
-                if(is_initialized(value())) {
-                    throw "Can't initialize constant twice!";
-                } else {
-                    value(nv);
-                }
-            }
-        });
-    }
-
-    var flag = function(init) {
-        var value = ko.observable(Boolean(init));
-        value.turn_on = function() {
-            value(true);
-        }
-        value.turn_off = function() {
-            value(false);
-        }
-        value.is_on = ko.computed(function() {
-            return Boolean(value());
-        });
-        value.is_off = ko.computed(function() {
-            return !value();
-        });
-        value.toggle = function() {
-            value(!value());
-        }
-        return value;
-    };
-
-    // a function to return a promise for when an observable become non-undefined and non-null
-    // but without guarantee that it won't become undefined or null again!
-    var after_init = function(observable) {
-        return new Promise(function(resolve, reject) {
-            var value = observable();
-            if(is_initialized(value)) {
-                resolve(true);
-            } else {
-                var sub = observable.subscribe(function(value) {
-                    if(is_initialized(value)) {
-                        sub.dispose();
-                        resolve(true);
-                    }
-                });
-            }
-        });
-    }
-
     // from http://stackoverflow.com/a/10073788/35364
     function pad(n, width, z) {
         z = z || '0';
@@ -168,87 +95,6 @@ define(function(require) {
     var make_parsable = function(text) {
         text.as_html = ko.computed(function() {
             return breaklines(furigana.to_html(ko.unwrap(text)));
-        });
-    }
-
-    // loosely based on http://stackoverflow.com/a/8918062
-    // returns a promise that's fulfilled when done, or rejected if interrupted
-    function smooth_scroll_to(element, target, duration) {
-        target = Math.round(target);
-        duration = Math.round(duration);
-        console.log("scrolling to target:", target);
-        if (duration < 0) {
-            return Promise.reject("bad duration");
-        }
-        if (duration === 0) {
-            element.scrollTop = target;
-            return Promise.resolve();
-        }
-
-        var start_time = Date.now();
-        var end_time = start_time + duration;
-
-        var start_top = element.scrollTop;
-        var difference = target - start_top;
-
-        // based on http://en.wikipedia.org/wiki/Smoothstep
-        var smooth_step = function(start, end, point) {
-            if(point <= start) { return 0; }
-            if(point >= end) { return 1; }
-            var x = (point - start) / (end - start); // interpolation
-            return x*x*(3 - 2*x);
-            // return x*x*x*(x*(x*6 - 15) + 10);
-        }
-
-        return new Promise(function(resolve, reject) {
-
-            var previous_top = element.scrollTop;
-
-            var scroll_frame = function() {
-                if(element.scrollTop != previous_top) {
-                    console.log("animation interrupted; aborting");
-                    reject("interrupted");
-                    return;
-                }
-                var now = Date.now();
-                // debugger;
-                var point = smooth_step(start_time, end_time, now);
-                // console.log("point now is:", point);
-                var frame_target = Math.round(start_top + (difference * point));
-                frame_target = Math.min(target, frame_target); // don't allow it to go past target
-                // console.log("scrolling to:", frame_target);
-                element.scrollTop = frame_target;
-
-                if(now >= end_time) {
-                    console.log("time over - done");
-                    resolve();
-                    return;
-                }
-
-                // if we were supposed to scroll but didn't ..
-                if(element.scrollTop === previous_top && element.scrollTop !== frame_target) {
-                    // didn't go through - we probably hit the limit
-                    // consider it done instead of interrupted
-                    console.log("Expected:", frame_target, "but found:", previous_top);
-                    console.log("didn't go through - assuming done!");
-                    resolve();
-                    return;
-                }
-                previous_top = element.scrollTop;
-
-                if (element.scrollTop > target) { // shouldn't happen - but for completeness
-                    console.log("scroll top > target");
-                    element.scrollTop = target;
-                    resolve();
-                    return;
-                }
-                if (element.scrollTop === target) {
-                    resolve();
-                    return;
-                }
-                setTimeout(scroll_frame, 0); // tick
-            }
-            setTimeout(scroll_frame, 0);
         });
     }
 
@@ -443,7 +289,7 @@ define(function(require) {
             }
         }
 
-        self.lessons = ko.observableArray(u.map(data.lessons, ctor_fn(LessonEntry)));
+        self.lessons = ko.observableArray(utils.ctor_map(data.lessons, LessonEntry));
     }
 
     /**
@@ -462,16 +308,13 @@ define(function(require) {
         self.video_source = ko.observable(data.media);
         self.title = ko.observable(data.title);
 
-        self.video_element = constant(null);
+        self.video_element = utils.constant(null);
         self.video_time = ko.observable(null);
         self.video_paused = ko.observable(true);
         self.player = null;
-        self.furigana_visible = flag(true);
-        self.video_visible = flag(true);
-
-        // video management .. "think" function for video player
-        after_init(self.video_element).then(function() {
-            console.log("Video Element has initialized");
+        self.furigana_visible = utils.flag(true);
+        self.video_visible = utils.flag(true);
+        self.video_initialized = utils.wait_for_init(self.video_element).then(function() {
             var element = self.video_element();
             self.player = new Player(element);
 
@@ -485,6 +328,9 @@ define(function(require) {
             }
             self.player.paused.subscribe(sync_paused);
             sync_paused(self.player.paused());
+
+            console.log("Video Player initialized");
+            return true;
         });
 
         var player_peek = function(start, end, reset) {
@@ -559,7 +405,7 @@ define(function(require) {
             self.notes = ko.observable(data.notes || "");
             make_parsable(self.notes);
 
-            self.element = constant(null);
+            self.element = utils.constant(null);
 
             self.lesson = lesson; // for templates (views)
 
@@ -611,7 +457,7 @@ define(function(require) {
             }
         }
 
-        self.sections_list = ko.observableArray(u.map(data.text_segments, ctor_fn(Section)));
+        self.sections_list = ko.observableArray(utils.ctor_map(data.text_segments, Section));
         self.sections = ko.computed(function() {
             return u.sortBy(self.sections_list(), function(s) { return s.time() });
         });
@@ -641,7 +487,7 @@ define(function(require) {
             if(!s) { return null; }
             return s.element();
         });
-        self.auto_scroll = flag(true);
+        self.auto_scroll = utils.flag(true);
 
         var get_scrolling_element = u.once(function() {
             var original = window.scrollY;
@@ -670,8 +516,8 @@ define(function(require) {
             var rect = element.getBoundingClientRect();
             var offset_to_bottom = window.innerHeight - rect.bottom;
             var offset_to_top = rect.top;
-            console.log("offset to bottom:", offset_to_bottom);
-            window.ex = element;
+            // console.log("offset to bottom:", offset_to_bottom);
+
             // enforce some minimum bottom offset
             var threshold = 150;
             var target_bottom_offset = Math.round(window.innerHeight * 0.5); // the value we want for the bottom offset
@@ -680,7 +526,7 @@ define(function(require) {
                 var shift = target_bottom_offset - offset_to_bottom;
                 var target = cont.scrollTop + shift;
                 var duration = shift * 3; // 3 seconds per 1000 pixels
-                smooth_scroll_to(cont, target, duration).then(function() {
+                utils.smooth_scroll_to(cont, target, duration).then(function() {
                     console.log("Scrolling done");
                 }).catch(function(e){
                     console.log("Scrolling aborted:", e);
@@ -691,7 +537,7 @@ define(function(require) {
 
         // debug
         if(false) {
-            invoke(function() { // IIFE
+            utils.invoke(function() { // IIFE
                 var previous_section = self.current_section();
                 self.current_section.subscribe(function(section) {
                     // console.log("New section .. are they equal?", section === previous_section);
@@ -724,7 +570,7 @@ define(function(require) {
         }
 
         self.jump_to_section = function(section) {
-            if(is_initialized(self.video_element)) {
+            if(utils.is_initialized(self.video_element)) {
                 self.current_section(section);
                 self.player.seek(section.time());
             }
@@ -762,7 +608,7 @@ define(function(require) {
             self.note_edit_mode.turn_on();
         }
 
-        self.note_edit_mode = flag(false);
+        self.note_edit_mode = utils.flag(false);
         // when the current section changes, turn off edit mode!
         self.current_section.subscribe(function() {
             self.note_edit_mode.turn_off();
