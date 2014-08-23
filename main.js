@@ -517,13 +517,19 @@ define(function(require) {
             var offset_to_bottom = window.innerHeight - rect.bottom;
             var offset_to_top = rect.top;
             // console.log("offset to bottom:", offset_to_bottom);
+            // console.log("offset to top:", offset_to_top);
 
             // enforce some minimum bottom offset
-            var threshold = 150;
-            var target_bottom_offset = Math.round(window.innerHeight * 0.5); // the value we want for the bottom offset
-            if(offset_to_bottom < threshold) {
+            var bottom_threshold = 150;
+            // if we're too low, bring it to almost near the top
+            var target_bottom_offset = Math.round(window.innerHeight * 0.75); // the value we want for the bottom offset
+            var target_top_offset = 80;
+            if(offset_to_bottom < bottom_threshold) {
                 var cont = get_scrolling_element();
                 var shift = target_bottom_offset - offset_to_bottom;
+                // but make sure not to make the top value too small!
+                var max_shift = offset_to_top - target_top_offset;
+                shift = Math.min(shift, max_shift);
                 var target = cont.scrollTop + shift;
                 var duration = shift * 3; // 3 seconds per 1000 pixels
                 utils.smooth_scroll_to(cont, target, duration).then(function() {
@@ -532,7 +538,6 @@ define(function(require) {
                     console.log("Scrolling aborted:", e);
                 });
             }
-
         });
 
         // debug
