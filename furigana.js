@@ -155,7 +155,12 @@ define(function(require) {
         }
         var ruby_item_html = function(item) {
             if('ruby' in item) {
-                return "<ruby><rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + (item.ruby || "&nbsp;") + "</rt>" + "<rp>)</rp></ruby>";
+                var ruby = item.ruby;
+                if(item.ruby == item.text) {
+                    ruby = ""
+                }
+                ruby = ruby || "&nbsp;";
+                return "<ruby><rb>" + item.text + "</rb>" + "<rp>(</rp>" + "<rt>" + ruby + "</rt>" + "<rp>)</rp></ruby>";
             }
         }
         var html_parts = u.map(parse, function(group) {
