@@ -673,8 +673,8 @@ define(function(require) {
             console.log("offset to bottom:", offset_to_bottom);
             window.ex = element;
             // enforce some minimum bottom offset
-            var threshold = 50;
-            var target_bottom_offset = Math.round(window.innerHeight * 0.3); // the value we want for the bottom offset
+            var threshold = 150;
+            var target_bottom_offset = Math.round(window.innerHeight * 0.5); // the value we want for the bottom offset
             if(offset_to_bottom < threshold) {
                 var cont = get_scrolling_element();
                 var shift = target_bottom_offset - offset_to_bottom;
