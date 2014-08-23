@@ -529,7 +529,7 @@ define(function(require) {
             var offset_to_bottom = window.innerHeight - rect.bottom;
             var offset_to_top = rect.top;
             // console.log("offset to bottom:", offset_to_bottom);
-            console.log("offset to top:", offset_to_top);
+            // console.log("offset to top:", offset_to_top);
 
             var top_threshold = 40; // topbar, etc
 
