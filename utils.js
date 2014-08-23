@@ -139,11 +139,9 @@ define(function(require) {
                     return;
                 }
                 var now = Date.now();
-                // debugger;
-                var point = smooth_step(start_time, end_time, now);
+                var point = smooth_step(start_time, end_time, now); // point is clamped to [0-1]
                 // console.log("point now is:", point);
                 var frame_target = Math.round(start_top + (difference * point));
-                frame_target = Math.min(target, frame_target); // don't allow it to go past target
                 // console.log("scrolling to:", frame_target);
                 element.scrollTop = frame_target;
 
@@ -164,16 +162,6 @@ define(function(require) {
                 }
                 previous_top = element.scrollTop;
 
-                if (element.scrollTop > target) { // shouldn't happen - but for completeness
-                    console.log("scroll top > target");
-                    element.scrollTop = target;
-                    resolve();
-                    return;
-                }
-                if (element.scrollTop === target) {
-                    resolve();
-                    return;
-                }
                 setTimeout(scroll_frame, 0); // tick
             }
             setTimeout(scroll_frame, 0);

@@ -513,31 +513,42 @@ define(function(require) {
             if(!element) { return; }
             if(self.auto_scroll.is_off()) { return; }
 
-            var rect = element.getBoundingClientRect();
-            var offset_to_bottom = window.innerHeight - rect.bottom;
-            var offset_to_top = rect.top;
-            // console.log("offset to bottom:", offset_to_bottom);
-            // console.log("offset to top:", offset_to_top);
-
-            // enforce some minimum bottom offset
-            var bottom_threshold = 150;
-            // if we're too low, bring it to almost near the top
-            var target_bottom_offset = Math.round(window.innerHeight * 0.75); // the value we want for the bottom offset
-            var target_top_offset = 80;
-            if(offset_to_bottom < bottom_threshold) {
+            function scroll_by(shift) {
                 var cont = get_scrolling_element();
-                var shift = target_bottom_offset - offset_to_bottom;
-                // but make sure not to make the top value too small!
-                var max_shift = offset_to_top - target_top_offset;
-                shift = Math.min(shift, max_shift);
                 var target = cont.scrollTop + shift;
-                var duration = shift * 3; // 3 seconds per 1000 pixels
+                var duration = Math.abs(shift) * 3; // 3 seconds per 1000 pixels
                 utils.smooth_scroll_to(cont, target, duration).then(function() {
                     console.log("Scrolling done");
                 }).catch(function(e){
                     console.log("Scrolling aborted:", e);
                 });
             }
+
+            var rect = element.getBoundingClientRect();
+            var offset_to_bottom = window.innerHeight - rect.bottom;
+            var offset_to_top = rect.top;
+            // console.log("offset to bottom:", offset_to_bottom);
+            console.log("offset to top:", offset_to_top);
+
+            var top_threshold = 40; // topbar, etc
+
+            // enforce some minimum bottom offset
+            var bottom_threshold = 150;
+            // if we're too low, bring it to almost near the top
+            var target_bottom_offset = Math.round(window.innerHeight * 0.75); // the value we want for the bottom offset
+            var target_top_offset = 80;
+            var top_shift = offset_to_top - target_top_offset;
+            var bottom_shift = target_bottom_offset - offset_to_bottom;
+            if(offset_to_bottom < bottom_threshold) {
+                // we want to use bottom_shift, but make sure not to make the
+                // top value too small!
+                var shift = Math.min(bottom_shift, top_shift);
+                scroll_by(shift);
+            }
+            if(offset_to_top < top_threshold) {
+                scroll_by(top_shift);
+            }
+
         });
 
         // debug
