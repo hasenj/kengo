@@ -134,7 +134,7 @@ define(function(require) {
 
             var scroll_frame = function() {
                 if(element.scrollTop != previous_top) {
-                    console.log("animation interrupted; aborting");
+                    // console.log("animation interrupted; aborting");
                     reject("interrupted");
                     return;
                 }
@@ -146,7 +146,7 @@ define(function(require) {
                 element.scrollTop = frame_target;
 
                 if(now >= end_time) {
-                    console.log("time over - done");
+                    // console.log("time over - done");
                     resolve();
                     return;
                 }
@@ -155,8 +155,8 @@ define(function(require) {
                 if(element.scrollTop === previous_top && element.scrollTop !== frame_target) {
                     // didn't go through - we probably hit the limit
                     // consider it done instead of interrupted
-                    console.log("Expected:", frame_target, "but found:", previous_top);
-                    console.log("didn't go through - assuming done!");
+                    // console.log("Expected:", frame_target, "but found:", previous_top);
+                    // console.log("didn't go through - assuming done!");
                     resolve();
                     return;
                 }
