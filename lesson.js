@@ -70,8 +70,14 @@ define(function(require) {
      */
     var Lesson = function(slug, data) {
         var self = this;
+        self.hash = ko.observable(data.hash);
+        self.backendhash = ko.observable(self.hash());
+        self.is_out_of_sync = ko.computed(function() {
+            return self.backendhash() != self.hash();
+        });
+        data = data.lesson; // HACK
         self.template_name = "lesson_template";
-        // XXX for now assume a video source ..
+        // XXX for now assume the media is always a video source ..
         self.video_source = ko.observable(data.media);
         self.title = ko.observable(data.title);
 
@@ -430,8 +436,11 @@ define(function(require) {
 
         self.saving = ko.observable(false);
         self.saved = ko.observable(false);
+        self.last_saved = ko.observable(Date.now());
         self.saved.subscribe(function(yes) { // everytime we save, listen to changes and unset the flag!
             if(yes) {
+                // XXX this will glitch if edits were made before the save completed?!
+                // XXX compare against self.last_saved_data()
                 var change = self.as_json.subscribe(function() {
                     self.saved(false);
                     change.dispose();
@@ -440,13 +449,19 @@ define(function(require) {
         });
         self.saved(true); // start saved
 
-        var save = function(method) {
+        self.last_saved_data = ko.observable(null);
+        var _save = function(method, data) {
             var url = "/api/lesson/" + slug;
-            var data = self.export_data();
             self.saving(true);
             self.saved(true); // be optimistic!
-            return req.request(method, url, {}, data).then(function() {
+            return req.request(method, url, {}, data).then(function(response) {
+                // update hash
+                self.hash(response.hash);
+                self.backendhash(response.hash);
+
                 self.saving(false);
+                self.last_saved(Date.now());
+                self.last_saved_data(data);
             }).catch(function(error) {
                 self.saving(false);
                 self.saved(false); // our optimism was wrong!
@@ -454,10 +469,17 @@ define(function(require) {
             });
         }
         self.save = function() {
-            return save("put");
+            var data = {
+                hash: self.hash(),
+                lesson: self.export_data()
+            }
+            return _save("put", data);
         }
-        self.create = function() { // like save, put for first time creation: uses POST
-            return save("post");
+        self.create = function() { // like save, put for first time creation: uses POST, and doesn't send a hash
+            var data = {
+                lesson: self.export_data()
+            }
+            return _save("post", data);
         }
         self.save_enabled = ko.computed(function() {
             return !self.saving() && !self.saved();
@@ -475,7 +497,28 @@ define(function(require) {
             return "Save"; // defaule
         });
 
+        self.last_hash_check = ko.observable(Date.now());
+        self.check_hash = function() {
+            if(self.is_out_of_sync()) {
+                return Promise.reject("Already out of sync");
+            }
+            setTimeout(self.check_hash, 30 * 1000)
+            var url = "/api/lesson_hash/" + slug;
+            return req.get(url).then(function(response) {
+                self.last_hash_check(Date.now());
+                self.backendhash(response.hash);
+            });
+        }
+        setTimeout(self.check_hash, 30 * 1000);
+
     };
+
+    Lesson.load = function(slug) {
+        var lesson_url = "/api/lesson/" + slug;
+        return req.get(lesson_url).then(function(data) {
+            return new Lesson(slug, data);
+        });
+    }
 
     return Lesson;
 });

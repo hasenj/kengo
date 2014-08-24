@@ -19,12 +19,11 @@ define(function(require) {
 
         self.loadLesson = function(lesson_slug) {
             self.loading_items.push(1); // XXX find a way to bind loading indicator to a promise?
-            var lesson_url = "/api/lesson/" + lesson_slug;
-            req.get(lesson_url).then(function(data) {
+            Lesson.load(lesson_slug).then(function(lesson) {
                 self.loading_items.pop();
                 self.error(null);
-                self.lesson(new Lesson(lesson_slug, data));
-                self.item(self.lesson()); // set as the page item!
+                self.lesson(lesson);
+                self.item(lesson); // set as the page item!
                 shortcuts.setupLessonShortcuts(self.lesson());
             }).catch(function(error) {
                 self.loading_items.pop();

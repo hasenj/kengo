@@ -24,6 +24,21 @@ def read_json_file(filename):
     with open(filename) as fp:
         return json.load(fp)
 
+
+import hashlib
+def filehash(filename, block_size=256*128):
+    """
+        Get the hash for a file at the given path
+        The hash is a sha512 hash
+        Based on http://stackoverflow.com/a/17782753/35364
+    """
+    hash = hashlib.sha512()
+    with open(filename, 'rb') as fp:
+        for chunk in iter(lambda: fp.read(block_size), b''):
+            hash.update(chunk)
+    return hash.hexdigest()
+
+
 def lesson_data(filename):
     """Read file as json, extract data, and return it as a dict"""
     data = read_json_file(filename)
@@ -42,36 +57,49 @@ def error_response(status_code, error_message, error_code=""):
     resp.status_code = status_code
     return resp
 
+def lesson_filename(slug):
+    # XXX maybe do security to ensure people can't put `..` and so on!!
+    # XXX or actually it doesn't matter much since this is only temporary - until we get a real database
+    return os.path.join("lessons", slug + ".json")
+
+@app.route("/api/lesson_hash/<slug>", methods=['GET'])
+def lesson_hash(slug):
+    hash = filehash(lesson_filename(slug))
+    return flask.jsonify(hash=hash)
+
 @app.route("/api/lesson/<slug>", methods=['PUT', 'GET', 'POST'])
 def lesson_resource(slug):
     request = flask.request
     if request.method == "GET":
         return get_lesson(slug)
     if request.method == "PUT":
-        return put_lesson(slug, request.json)
+        # for PUT, make sure the hashes match
+        filename = lesson_filename(slug)
+        if(filehash(filename) != request.json['hash']):
+            return error_response(401, "Your version is out of date!", "hash-mismatch")
+        return save_lesson(slug, request.json['lesson'])
     if request.method == "POST":
         # for post, make sure the lesson doesn't already exist
-        filename = os.path.join("lessons", slug + ".json")
+        filename = lesson_filename(slug)
         if os.path.isfile(filename):
             return error_response(401, "slug already exists", "file-exists")
         else:
-            return put_lesson(slug, request.json)
+            return save_lesson(slug, request.json['lesson'])
 
 
 def get_lesson(slug):
-    filename = os.path.join("lessons", slug + ".json")
-    # XXX handle error case if file doesn't exist!
-    # XXX also maybe do security to ensure people can't put `..` and so on!!
-    # XXX or actually it doesn't matter much since this is only temporary - until we get a real database
+    # XXX handle error case if file doesn't exist?!
+    filename = lesson_filename(slug)
     lesson = read_json_file(filename)
-    return flask.jsonify(**lesson)
+    hash = filehash(filename)
+    return flask.jsonify(hash=hash, lesson=lesson)
 
-def put_lesson(slug, data):
-    filename = os.path.join("lessons", slug + ".json")
-    # XXX see notes inside get_lesson
+def save_lesson(slug, lesson_data):
+    filename = lesson_filename(slug)
     with codecs.open(filename, 'w', 'utf8') as fp:
-        json.dump(data, fp, indent=4, separators=(',', ': '), ensure_ascii=False)
-    return flask.jsonify()
+        json.dump(lesson_data, fp, indent=4, separators=(',', ': '), ensure_ascii=False)
+    newhash = filehash(filename)
+    return flask.jsonify(hash=newhash)
 
 if __name__ == "__main__":
     app.run(debug=True, port=10110)

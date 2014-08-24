@@ -53,10 +53,10 @@
                     <div class="controls section">
                         <div class="group">
                             <!-- ko if: $parent.note_edit_mode.is_off -->
-                            <button data-bind="click: $parent.note_edit_mode.turn_on, enable: lesson.video_paused">Edit</button>
+                            <button data-bind="click: $parent.note_edit_mode.turn_on, disable: lesson.is_out_of_sync">Edit</button>
                             <!-- /ko -->
                             <!-- ko if: $parent.note_edit_mode.is_on -->
-                            <button data-bind="click: $parent.note_edit_mode.turn_off, enable: lesson.video_paused">View</button>
+                            <button data-bind="click: $parent.note_edit_mode.turn_off">View</button>
                             <!-- /ko -->
                         </div>
                         <div class="group">
@@ -82,6 +82,11 @@
                         </div>
                         <div class="group">
                             <button class="toggle" data-bind="click: auto_scroll.toggle, css.is_off: auto_scroll.is_off">^^</button>
+                        </div>
+                    </div>
+                    <div class="notifications">
+                        <div class="notification" data-bind="visible: is_out_of_sync">
+                            Your version is out of sync with the backend! Reload before making edits!
                         </div>
                     </div>
                     <div class="sections" data-bind="css.no_furigana: furigana_visible.is_off">
