@@ -78,7 +78,7 @@ define(function(require) {
         data = data.lesson; // HACK
         self.template_name = "lesson_template";
         // XXX for now assume the media is always a video source ..
-        self.video_source = ko.observable(data.media);
+        self.video_source = ko.observable(data.media); // XXX should we make this a constant?!
         self.title = ko.observable(data.title);
 
         self.video_element = utils.constant(null);
@@ -510,6 +510,26 @@ define(function(require) {
             });
         }
         setTimeout(self.check_hash, 30 * 1000);
+
+        self.reload = function() {
+            // XXX check for the existence of unsaved edits, and warn user if so!
+            var lesson_url = "/api/lesson/" + slug;
+            return req.get(lesson_url).then(function(data) {
+                // return new Lesson(slug, data);
+                // update the lesson!
+                self.hash(data.hash);
+                self.backendhash(self.hash());
+                data = data.lesson; // HACK
+                // the section list can be completely rebuilt - nothing special there
+                self.title(data.title);
+                self.sections_list(utils.ctor_map(data.text_segments, Section));
+                // hack - force current section to be recalculated
+                // this is a hack because it should be more automatic
+                self.current_section(null);
+                // don't update the media - it might fuck around with the player and the media element and all that shit!
+                return true;
+            });
+        }
 
     };
 
