@@ -17,6 +17,8 @@ define(function(require) {
             .toggle
             .is_on (sort of redundant! but always returns Boolean)
             .is_off
+            .wait_for_on // returns a promise
+            .wait_for_off // returns a promise
      */
     utils.flag = function(init) {
         var value = ko.observable(Boolean(init));
@@ -25,6 +27,12 @@ define(function(require) {
         }
         value.turn_off = function() {
             value(false);
+        }
+        var is_on = function(v) {
+            return Boolean(v);
+        }
+        var is_off = function(v) {
+            return !is_on(v);
         }
         value.is_on = ko.computed(function() {
             return Boolean(value());
@@ -35,8 +43,48 @@ define(function(require) {
         value.toggle = function() {
             value(!value());
         }
+        value.wait_for_on = function() {
+            return utils.wait_for(value, is_on);
+        }
+        value.wait_for_off = function() {
+            return utils.wait_for(value, is_off);
+        }
         return value;
     };
+
+    // promise that resolves when observable gets value
+    // the value can optionally be a function that takes a value and returns true or false
+    // with an optional timeout
+    utils.wait_for = function(observable, value, timeout) {
+        var value_check = function() {
+            return observable() == value;
+        }
+        if(u.isFunction(value)) {
+            value_check = value;
+        }
+
+        if(value_check(observable())) {
+            return Promise.resolve(value());
+        }
+        return new Promise(function(resolve, reject) {
+            var timer = null;
+            var sub = observable.subscribe(function(nv) {
+                if(value_check(nv)) {
+                    sub.dispose();
+                    resolve()
+                    if(timer) {
+                        clearTimeout(timer);
+                    }
+                }
+            });
+            if(utils.is_initialized(timeout)) {
+                var timer = setTimeout(function() {
+                    sub.dispose();
+                    reject("timeout");
+                });
+            }
+        });
+    }
 
     // an observable that can't be changed once initialized!
     utils.constant = function(init) {
