@@ -50,56 +50,6 @@ define(function(require) {
         self.item = ko.observable();
     };
 
-    var CreateLessonPage = function(app) {
-        var self = this;
-        self.template_name = "new_lesson_template";
-        self.slug = ko.observable("");
-        self.title = ko.observable("");
-        self.media = ko.observable("");
-        self.text_language = ko.observable("japanese");
-        self.user_language = ko.observable("arabic");
-        self.error = ko.observable("");
-
-        self.start = function() {
-            self.error("");
-            var lesson = new Lesson(self.slug(), self.export_data());
-            // try to save the lesson first
-            lesson.create().then(function() {
-                app.lesson(lesson);
-                app.item(lesson);
-            }).catch(function(error) {
-                var friendly_message = "Creating lesson failed: ["+ error.error + "] " + error.message;
-                console.error(friendly_message);
-                self.error(friendly_message);
-            });
-        }
-
-        // CreateLessonPage.export_data
-        self.export_data = function() {
-            var out = {};
-            out.media = self.media();
-            out.title = self.title();
-            out.text_language = self.text_language();
-            out.user_language = self.user_language();
-            out.text_segments = [{time: "00:00", text: ""}];
-            return out;
-        }
-    }
-
-    var LessonListPage = function(app, data) {
-        var self = this;
-        self.template_name = "lesson_list_template";
-
-        var LessonEntry = function(data) {
-            var self = this;
-            self.title = ko.observable(data.title);
-            self.load = function() {
-                app.loadLesson(data.slug);
-            }
-        }
-
-        self.lessons = ko.observableArray(utils.ctor_map(data.lessons, LessonEntry));
-    }
 
 
     var app = new Application();

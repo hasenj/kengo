@@ -76,7 +76,6 @@ define(function(require) {
             return self.backendhash() != self.hash();
         });
         data = data.lesson; // HACK
-        self.template_name = "lesson_template";
         // XXX for now assume the media is always a video source ..
         self.video_source = ko.observable(data.media); // XXX should we make this a constant?!
         self.title = ko.observable(data.title);
