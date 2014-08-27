@@ -497,18 +497,17 @@ define(function(require) {
         });
 
         self.last_hash_check = ko.observable(Date.now());
+
         self.check_hash = function() {
             if(self.is_out_of_sync()) {
                 return Promise.reject("Already out of sync");
             }
-            setTimeout(self.check_hash, 30 * 1000)
             var url = "/api/lesson_hash/" + slug;
             return req.get(url).then(function(response) {
                 self.last_hash_check(Date.now());
                 self.backendhash(response.hash);
             });
         }
-        setTimeout(self.check_hash, 30 * 1000);
 
         self.reload = function() {
             // XXX check for the existence of unsaved edits, and warn user if so!

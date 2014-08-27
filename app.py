@@ -101,7 +101,23 @@ def save_lesson(slug, lesson_data):
     with codecs.open(filename, 'w', 'utf8') as fp:
         json.dump(lesson_data, fp, indent=4, separators=(',', ': '), ensure_ascii=False)
     newhash = filehash(filename)
+
+    # This should be try-catch maybe? we don't want this to break the save ..
+    # XXX should we force this to be delayed somehow? we want to report successful save to the saver before notifying it!
+    socket_server.emit('changed', room=slug)
+
     return flask.jsonify(hash=newhash)
+
+@socket_server.on('watch')
+def on_watch(slug):
+    print "Someone is watching:", slug
+    socketio.join_room(slug)
+
+@socket_server.on('watch_end')
+def on_watch(slug):
+    print "Someone stopped watching:", slug
+    socketio.leave_room(slug)
+
 
 if __name__ == "__main__":
     app.debug = True
