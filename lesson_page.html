@@ -10,10 +10,10 @@
                     <button data-bind="click: video_peek, enable: video_paused"> [-? </button>
                 </div>
                 <div class="group">
-                    <button data-bind="click: backward_smaller, enable: video_paused"> < </button>
-                    <button data-bind="click: backward_small, enable: video_paused"> <= </button>
-                    <button data-bind="click: forward_small, enable: video_paused"> => </button>
-                    <button data-bind="click: forward_smaller, enable: video_paused"> > </button>
+                    <button data-bind="click: backward_smaller, enable: video_paused"> &lt; </button>
+                    <button data-bind="click: backward_small, enable: video_paused"> &lt;= </button>
+                    <button data-bind="click: forward_small, enable: video_paused"> =&gt; </button>
+                    <button data-bind="click: forward_smaller, enable: video_paused"> &gt; </button>
                 </div>
                 <div class="group">
                     <button data-bind="click: insert_section_at_player_time, enable: video_paused"> + New Segment </button>
@@ -33,7 +33,7 @@
                     <!-- /ko -->
                 </div>
                 <div class="group">
-                    <button data-bind="click: use_video_time, enable: lesson.video_paused">Start From Video Time</button>
+                    <button data-bind="click: use_video_time, enable: lesson.video_paused">Use Video Time</button>
                     <button data-bind="click: jump_video_to_start"> |&lt; </button>
                     <button data-bind="click: play_section_only, enable: lesson.video_paused"> [&gt;] </button>
                 </div>
