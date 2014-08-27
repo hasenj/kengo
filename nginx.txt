@@ -1,0 +1,26 @@
+# Reference for how to setup nginx
+# server_name and alias for / location are based on my local settings
+server {
+    listen       80;
+    server_name  kengo;
+
+    location / {
+        alias /Users/hasenj/code/kengo-notes/;
+        index page.html;
+    }
+
+    location /api {
+        proxy_pass http://localhost:10110/api;
+    }
+
+    location /socket.io {
+        proxy_pass http://localhost:10110/socket.io;
+        proxy_redirect off;
+        proxy_buffering off;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+    }
+}
+
