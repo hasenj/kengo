@@ -1,5 +1,7 @@
 import flask
+import flask.ext.socketio as socketio
 app = flask.Flask(__name__)
+socket_server = socketio.SocketIO(app)
 
 import os, itertools, json, codecs
 
@@ -102,4 +104,5 @@ def save_lesson(slug, lesson_data):
     return flask.jsonify(hash=newhash)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=10110)
+    app.debug = True
+    socket_server.run(app, port=10110)
