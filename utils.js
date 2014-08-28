@@ -9,6 +9,12 @@ define(function(require) {
         fn();
     }
 
+    utils.is_on = function(v) {
+        return Boolean(v);
+    }
+    utils.is_off = function(v) {
+        return !utils.is_on(v);
+    }
     /**
         Observable used as a boolean flag
         with helpers:
@@ -28,33 +34,37 @@ define(function(require) {
         value.turn_off = function() {
             value(false);
         }
-        var is_on = function(v) {
-            return Boolean(v);
-        }
-        var is_off = function(v) {
-            return !is_on(v);
-        }
         value.is_on = ko.computed(function() {
-            return Boolean(value());
+            return utils.is_on(value());
         });
         value.is_off = ko.computed(function() {
-            return !value.is_on();
+            return utils.is_off(value());
         });
         value.toggle = function() {
             value(!value());
         }
-        value.wait_for_on = function() {
-            return utils.wait_for(value, is_on);
+        // @param timeout: a canceller timeout. see utils.wait_for
+        value.wait_for_on = function(timeout) {
+            return utils.wait_for(value, utils.is_on, timeout);
         }
-        value.wait_for_off = function() {
-            return utils.wait_for(value, is_off);
+        // @param timeout: a canceller timeout. see utils.wait_for
+        value.wait_for_off = function(timeout) {
+            return utils.wait_for(value, utils.is_off, timeout);
         }
         return value;
     };
 
+    utils.wait_timeout = function(timeout) {
+        return new Promise(function(resolve, reject) {
+            setTimeout(resolve, timeout);
+        });
+    }
+
     // promise that resolves when observable gets value
     // the value can optionally be a function that takes a value and returns true or false
     // with an optional timeout
+    // timeout is either a number, in which case it's just a timeout ..
+    // or a promise object. When the promise is fullfilled (or timeout passes), the promise is reject; i.e. the wait is aborted!
     utils.wait_for = function(observable, value, timeout) {
         var value_check = function() {
             return observable() == value;
@@ -67,20 +77,19 @@ define(function(require) {
             return Promise.resolve(value());
         }
         return new Promise(function(resolve, reject) {
-            var timer = null;
             var sub = observable.subscribe(function(nv) {
                 if(value_check(nv)) {
-                    sub.dispose();
+                    sub.dispose(); // idempotent
                     resolve()
-                    if(timer) {
-                        clearTimeout(timer);
-                    }
                 }
             });
             if(utils.is_initialized(timeout)) {
-                var timer = setTimeout(function() {
-                    sub.dispose();
-                    reject("timeout");
+                if(u.isNumber(timeout)) {
+                    timeout = utils.wait_timeout(timeout); // convert it to a promise!
+                }
+                timeout.then(function() {
+                    sub.dispose(); // idempotent!
+                    reject("timeout promise"); // rejecting when already resolved should be safe
                 });
             }
         });
