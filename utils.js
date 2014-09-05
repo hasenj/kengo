@@ -124,6 +124,24 @@ define(function(require) {
         }
     }
 
+    /**
+        Usage: at the start of a factory/constructor function:
+
+            function SomeThing() {
+                var self = utils.find_self(this, SomeThing);
+                return self;
+            }
+
+        This will make SomeThing callable as either a constructor or a factory with the exact same effect
+     */
+    utils.find_self = function(that, ctor) {
+        if(that instanceof ctor) {
+            return that;
+        } else {
+            return Object.create(ctor.prototype);
+        }
+    }
+
     utils.ctor_map = function(list, ctor) {
         return u.map(list, utils.ctor_fn(ctor));
     }
@@ -225,6 +243,10 @@ define(function(require) {
         });
     }
 
+    // conert arguments to arrays with slicing option!
+    utils.arguments = function(args, start, end) {
+        return Array.prototype.slice.apply(args, [start, end]);
+    }
 
     return utils;
 });
