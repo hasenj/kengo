@@ -398,15 +398,17 @@ define(function(require) {
         }
 
         self.note_edit_mode = utils.flag(false);
+        /*
         // when the current section changes, turn off edit mode!
         self.current_section.subscribe(function() {
             self.note_edit_mode.turn_off();
         });
+        */
         self.enter_note_edit_mode = function() {
             self.note_edit_mode.turn_on();
         }
         self.leave_note_edit_mode = function() {
-            self.note_edit_mode.toggle();
+            self.note_edit_mode.turn_off();
         }
         self.note_edit_mode.subscribe(function(yes) {
             // XXX assuming the first call will always be a "yes" ..
