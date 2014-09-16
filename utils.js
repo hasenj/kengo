@@ -124,22 +124,8 @@ define(function(require) {
         }
     }
 
-    /**
-        Usage: at the start of a factory/constructor function:
-
-            function SomeThing() {
-                var self = utils.find_self(this, SomeThing);
-                return self;
-            }
-
-        This will make SomeThing callable as either a constructor or a factory with the exact same effect
-     */
-    utils.find_self = function(that, ctor) {
-        if(that instanceof ctor) {
-            return that;
-        } else {
-            return Object.create(ctor.prototype);
-        }
+    utils.create = function(ctor) {
+        return Object.create(ctor.prototype);
     }
 
     utils.ctor_map = function(list, ctor) {

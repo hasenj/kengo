@@ -1,0 +1,17 @@
+.menu_host { // must be a direct child of document body!
+    position: absolute;
+    background: white;
+    opacity: 0.95;
+    color: black;
+    font-size: 12px;
+
+    .menu {
+        padding: 0px;
+        .item {
+            padding: 4px 20px;
+            &:hover {
+                background-color: hsl(240, 50%, 80%);
+            }
+        }
+    }
+}
