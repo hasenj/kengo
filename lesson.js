@@ -306,12 +306,13 @@ define(function(require) {
             var top_threshold = 40; // topbar, etc
 
             // enforce some minimum bottom offset
-            var bottom_threshold = 150;
+            var bottom_threshold = 80;
             // if we're too low, bring it to almost near the top
-            var target_bottom_offset = Math.round(window.innerHeight * 0.75); // the value we want for the bottom offset
+            var target_bottom_offset = Math.round(window.innerHeight * 0.6); // the value we want for the bottom offset
             var target_top_offset = 80;
             var top_shift = offset_to_top - target_top_offset;
             var bottom_shift = target_bottom_offset - offset_to_bottom;
+            bottom_shift = Math.max(bottom_shift, 400); // don't scroll up *too* much
             if(offset_to_bottom < bottom_threshold) {
                 // we want to use bottom_shift, but make sure not to make the
                 // top value too small!
