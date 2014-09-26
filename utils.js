@@ -6,7 +6,7 @@ define(function(require) {
 
     // to make IIFE's more readable
     utils.invoke = function(fn) {
-        fn();
+        return fn();
     }
 
     utils.is_on = function(v) {
@@ -233,6 +233,64 @@ define(function(require) {
     utils.arguments = function(args, start, end) {
         return Array.prototype.slice.apply(args, [start, end]);
     }
+
+    /**
+        Detect when the user leaves this page and comes back to it
+
+        There's a visibility API but it only seems to work when the user
+        switches to another tab within the browser! It does not work when the
+        user leaves the browser completely!
+
+        On the other hand, there's a window focus and blur events, but they
+        don't seem to work when the user switches to another tab within the
+        current browser.
+
+        Here, we brings these two mechanisms together to provide a simple flag
+        in the form of a knockout observable that tells us wether or not the
+        page has focus.
+
+     */
+    utils.page_has_focus = utils.invoke(function() {
+        // from the mozilla wiki
+        // Set the name of the hidden property and the change event for visibility
+        var hidden, visibilityChange;
+        if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+            hidden = "hidden";
+            visibilityChange = "visibilitychange";
+        } else if (typeof document.mozHidden !== "undefined") {
+            hidden = "mozHidden";
+            visibilityChange = "mozvisibilitychange";
+        } else if (typeof document.msHidden !== "undefined") {
+            hidden = "msHidden";
+            visibilityChange = "msvisibilitychange";
+        } else if (typeof document.webkitHidden !== "undefined") {
+            hidden = "webkitHidden";
+            visibilityChange = "webkitvisibilitychange";
+        }
+
+        // our flag!
+        var page_has_focus = ko.observable();
+
+        var checkFocus = function() {
+            var docFocused = document.hasFocus();
+            var pageVisible = !document[hidden];
+
+            // update our main flag
+            page_has_focus(pageVisible && docFocused);
+            return page_has_focus();
+        }
+
+        document.addEventListener(visibilityChange, checkFocus);
+        window.addEventListener("focus", checkFocus);
+        window.addEventListener("blur", checkFocus);
+
+        document.onreadystatechange = checkFocus;
+
+        // read-only
+        return ko.computed(function() {
+           return page_has_focus();
+        });
+    });
 
     return utils;
 });
