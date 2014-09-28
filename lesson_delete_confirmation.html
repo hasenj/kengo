@@ -1,0 +1,23 @@
+<div class="dialog">
+    <div>
+    Are you sure you want to delete this lesson? <br>
+    {{ lesson_title }}
+    <br><br>
+    This will permanently delete the lesson. There's no undo!
+    <br><br>
+    Please type the following confirmation code in the textbox below:
+    </div>
+
+    <div class="code_display">
+        {{ required_confirmation }}
+    </div>
+
+    <div class="controls">
+        <div class="group">
+            <input data-bind="attr.placeholder: required_confirmation, textInput: confirmation_input" />
+        </div>
+        <div class="group"> <button data-bind="enable: is_confirmation_valid, click:accept_confirmation" class="red">Delete Lesson</button> </div>
+        <div class="group"> <button data-bind="click: cancel">Cancel</button> </div>
+    </div>
+
+</div>

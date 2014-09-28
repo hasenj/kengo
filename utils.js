@@ -112,6 +112,13 @@ define(function(require) {
         });
     }
 
+    // return a read-only view of an observable
+    utils.read_only = function(observable) {
+        return ko.computed(function() {
+            return ko.unwrap(observable);
+        });
+    }
+
 
     // Take a constructor and return a function that can be called without new
     // but have the same effect as calling the constructor with new.
