@@ -1,8 +1,9 @@
 define(function(require) {
     var ko = require('ko');
     var app_shell = require('app_shell');
+    var Lesson = require('lesson');
 
-    var CreateLessonPage = function(app) {
+    var CreateLessonPage = function() {
         var self = this;
         self.viewUrl = "new_lesson_page.html";
         self.slug = ko.observable("");
@@ -14,11 +15,12 @@ define(function(require) {
 
         self.start = function() {
             self.error("");
-            var lesson = new Lesson(self.slug(), self.export_data());
+            var slug = self.slug();
+            var data = self.export_data();
+            var lesson = new Lesson(slug, data);
             // try to save the lesson first
             lesson.create().then(function() {
-                app.lesson(lesson);
-                app.item(lesson);
+                app_shell.loadLesson(slug);
             }).catch(function(error) {
                 var friendly_message = "Creating lesson failed: ["+ error.error + "] " + error.message;
                 console.error(friendly_message);
@@ -31,13 +33,13 @@ define(function(require) {
 
         // CreateLessonPage.export_data
         self.export_data = function() {
-            var out = {};
-            out.media = self.media();
-            out.title = self.title();
-            out.text_language = self.text_language();
-            out.user_language = self.user_language();
-            out.text_segments = [{time: "00:00", text: ""}];
-            return out;
+            var data = {};
+            data.media = self.media();
+            data.title = self.title();
+            data.text_language = self.text_language();
+            data.user_language = self.user_language();
+            data.text_segments = [{time: "00:00", text: ""}];
+            return { lesson: data };
         }
     }
     return CreateLessonPage;
