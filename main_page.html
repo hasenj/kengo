@@ -1,22 +1,38 @@
 <div>
-    <div class="lessons_list">
-        <div class="lessons_list_header">
+    <!-- XXX in the future, we will show several of these, one for each channel this user owns -->
+    <div class="lessons_table">
+        <div class="lessons_table_row">
             <div class="title">
-                Your lessons
+                <strong>Your lessons</strong>
             </div>
             <div class="controls">
                 <div class="group">
                     <button class="new_lesson" data-bind="click: app_shell.newLesson">New Lesson</button>
                 </div>
                 <div class="group">
-                    <button class="new_lesson" data-bind="click: edit_mode.turn_on">Edit</button>
+                    <button class="new_lesson" data-bind="click: edit_mode.turn_on, enable: edit_mode.is_off">Edit</button>
+                    <button class="new_lesson" data-bind="click: edit_mode.turn_off, enable: edit_mode.is_on">Done</button>
                 </div>
             </div>
         </div>
-        <div class="lessons_list_body" data-bind="foreach: lessons">
-            <div class="lesson_entry" data-bind="click: load">
-                {{ title }}
+        <!-- ko foreach: lessons -->
+            <div class="lessons_table_row lesson_entry">
+                <!-- ko ifnot: $parent.edit_mode -->
+                    <div class="title clickable" data-bind="click: load">
+                        {{ title }}
+                    </div>
+                <!-- /ko -->
+                <!-- ko if: $parent.edit_mode -->
+                    <div class="title">
+                        {{ title }}
+                    </div>
+                    <div class="controls">
+                        <div class="group">
+                            <button class="button_red" data-bind="visible: hovered, click: delete_lesson">delete</button>
+                        </div>
+                    </div>
+                <!-- /ko -->
             </div>
-        </div>
+        <!-- /ko -->
     </div>
 </div>

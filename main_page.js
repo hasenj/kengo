@@ -15,6 +15,8 @@ define(function(require) {
             self.load = function() {
                 app_shell.loadLesson(data.slug);
             }
+            self.selected = utils.flag(false);
+            self.hovered = utils.flag(true);
         };
 
         // XXX consider assuming a thumbnail .. for example:
@@ -27,6 +29,8 @@ define(function(require) {
         self.update = function(data) {
             self.lessons(utils.ctor_map(data.lessons, LessonEntry));
         };
+
+        self.edit_mode = utils.flag(false);
 
         self.activate = function() {
             console.log("Activating main page");

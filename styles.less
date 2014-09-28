@@ -116,7 +116,7 @@
 
 @import url(http://fonts.googleapis.com/css?family=Roboto:400,300);
 
-div.lessons_list {
+div.lessons_table {
     font-family: 'Roboto', sans-serif;
     font-weight: 300;
     font-size: 16pt;
@@ -124,7 +124,7 @@ div.lessons_list {
     padding: 10px;
     width: 700px;
 
-    div.lessons_list_header {
+    div.lessons_table_row {
         width: 100%;
         display: table;
         & > div {
@@ -134,25 +134,17 @@ div.lessons_list {
         // -------
 
         & > div.controls {
-            width: 300px;
             text-align: right;
+            padding-right: 20px;
         }
 
         & > div.title {
             padding: 7px 12px;
         }
 
-    }
-
-    div.lessons_list_body > div.lesson_entry {
-        padding: 7px 12px;
-        cursor: pointer;
         color: hsl(100, 20%, 20%);
-        &:nth-child(odd) {
+        &:nth-child(even) {
             background-color: hsl(100, 80%, 98%);
-        }
-        &:hover {
-            background-color: hsl(200, 70%, 98%);
         }
 
         @bordercolor: silver;
@@ -161,8 +153,16 @@ div.lessons_list {
         &:last-child {
             border-bottom: 1px solid @bordercolor;
         }
+
+    }
+
+    div.lesson_entry {
+        &:hover {
+            background-color: hsl(200, 70%, 98%);
+        }
     }
 }
+
 button.new_lesson {
     margin-left: 70px;
 }
