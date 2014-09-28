@@ -1,8 +1,22 @@
 <div>
-    <button class="new_lesson" data-bind="click: app_shell.newLesson">New Lesson</button>
-    <div class="lessons_list" data-bind="foreach: lessons">
-        <div class="lesson_entry" data-bind="click: load">
-            {{ title }}
+    <div class="lessons_list">
+        <div class="lessons_list_header">
+            <div class="title">
+                Your lessons
+            </div>
+            <div class="controls">
+                <div class="group">
+                    <button class="new_lesson" data-bind="click: app_shell.newLesson">New Lesson</button>
+                </div>
+                <div class="group">
+                    <button class="new_lesson" data-bind="click: edit_mode.turn_on">Edit</button>
+                </div>
+            </div>
+        </div>
+        <div class="lessons_list_body" data-bind="foreach: lessons">
+            <div class="lesson_entry" data-bind="click: load">
+                {{ title }}
+            </div>
         </div>
     </div>
 </div>
