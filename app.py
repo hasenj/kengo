@@ -69,7 +69,7 @@ def lesson_hash(slug):
     hash = filehash(lesson_filename(slug))
     return flask.jsonify(hash=hash)
 
-@app.route("/api/lesson/<slug>", methods=['PUT', 'GET', 'POST'])
+@app.route("/api/lesson/<slug>", methods=['PUT', 'GET', 'POST', 'DELETE'])
 def lesson_resource(slug):
     request = flask.request
     if request.method == "GET":
@@ -87,6 +87,12 @@ def lesson_resource(slug):
             return error_response(401, "slug already exists", "file-exists")
         else:
             return save_lesson(slug, request.json['lesson'])
+    if request.method == "DELETE":
+        # XXX check the user has permission to delete this lesson!!!
+        filename = lesson_filename(slug)
+        if not os.path.isfile(filename):
+            return error_response(400, "no such lesson", "file-not-exists")
+        return delete_lesson(slug)
 
 
 def get_lesson(slug):
@@ -107,6 +113,12 @@ def save_lesson(slug, lesson_data):
     socket_server.emit('changed', room=slug)
 
     return flask.jsonify(hash=newhash)
+
+def delete_lesson(slug):
+    # XXX check the user has permission to delete this lesson!!!
+    filename = lesson_filename(slug)
+    os.remove(filename)
+    return flask.jsonify(ok=True)
 
 @socket_server.on('watch')
 def on_watch(slug):

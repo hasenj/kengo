@@ -21,8 +21,17 @@ define(function(require) {
             self.load = function() {
                 app_shell.loadLesson(data.slug);
             }
-            self.selected = utils.flag(false);
+            self.disabled = utils.flag(false);
             self.hovered = utils.flag(true);
+            self.working = utils.flag(false);
+
+            self.test_delete_ui = function() {
+                self.working(true);
+                self.disabled(true);
+                utils.wait_timeout(500).then(function() {
+                    self.lessons.remove(self);
+                });
+            }
 
             // show a popup dialog to confirm
             self.delete_lesson = function() {
@@ -63,7 +72,9 @@ define(function(require) {
                     if(yes) {
                         // do the actual deletion!
                         console.log("XXX WIP deleting lesson");
-                        page.lessons.remove(self);
+                        lesson.disabled(true);
+                        lesson.working(true);
+                        // page.lessons.remove(self);
                     } else {
                         // nothing to do
                         console.log("cancelled; won't delete lesson");

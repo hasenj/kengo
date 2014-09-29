@@ -16,7 +16,7 @@
             </div>
         </div>
         <!-- ko foreach: lessons -->
-            <div class="lessons_table_row lesson_entry">
+            <div class="lessons_table_row lesson_entry" data-bind="css.disabled: disabled">
                 <!-- ko ifnot: $parent.edit_mode -->
                     <div class="title clickable" data-bind="click: load">
                         {{ title }}
@@ -25,10 +25,13 @@
                 <!-- ko if: $parent.edit_mode -->
                     <div class="title">
                         {{ title }}
+                        <!-- ko if: working -->
+                             <img src="/images/working.gif" />
+                        <!-- /ko -->
                     </div>
                     <div class="controls">
                         <div class="group">
-                            <button class="button_red" data-bind="visible: hovered, click: delete_lesson">delete</button>
+                            <button class="button_red" data-bind="visible: hovered, click: test_delete_ui">delete</button>
                         </div>
                     </div>
                 <!-- /ko -->

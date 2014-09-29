@@ -185,6 +185,14 @@ div.lessons_table {
             background-color: hsl(200, 70%, 98%);
         }
     }
+    div.lesson_entry.disabled {
+        color: hsl(200, 10%, 40%);
+        background-color: hsl(200, 10%, 85%);
+        & > * {
+            opacity: 0.7;
+        }
+        pointer-events:none;
+    }
 }
 
 button.new_lesson {
