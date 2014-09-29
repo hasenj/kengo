@@ -17,7 +17,7 @@ define(function(require) {
         var LessonEntry = function(data) {
             var self = this;
             self.title = ko.observable(data.title);
-            self.slug = data.slug;
+            self.slug = utils.constant(data.slug);
             self.load = function() {
                 app_shell.loadLesson(data.slug);
             }
@@ -43,7 +43,7 @@ define(function(require) {
                     self.lesson_title = utils.read_only(lesson.title);
                     self.lesson_slug = lesson.slug;
 
-                    self.required_confirmation = "delete " + self.lesson_slug;
+                    self.required_confirmation = "delete " + self.lesson_slug();
                     self.confirmation_input = ko.observable("");
                     self.is_confirmation_valid = ko.computed(function() {
                         return self.confirmation_input() == self.required_confirmation;
@@ -71,13 +71,25 @@ define(function(require) {
                 dialog.show(confirmation_dialog).then(function(yes) {
                     if(yes) {
                         // do the actual deletion!
-                        console.log("XXX WIP deleting lesson");
-                        lesson.disabled(true);
-                        lesson.working(true);
-                        // page.lessons.remove(self);
+                        self.disabled(true);
+                        self.working(true);
+                        // even if delete request returns quickly, we will wait at least one second
+                        var waiting = utils.wait_timeout(1000);
+                        var url = "/api/lesson/" + self.slug();
+                        req.del(url).then(function() {
+                            waiting.then(function() {
+                                page.lessons.remove(self);
+                                // now self should not exist anywhere in the app
+                                // XXX do we somehow need to mark it as destroyed or something?!
+                            });
+                        }).catch(function() {
+                            self.working(false);
+                            self.disabled(false);
+                            alert("Deletion failed!!");
+                        });
                     } else {
                         // nothing to do
-                        console.log("cancelled; won't delete lesson");
+                        // console.log("cancelled; won't delete lesson");
                     }
                 });
             }
