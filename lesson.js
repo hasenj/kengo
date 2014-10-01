@@ -261,7 +261,7 @@ define(function(require) {
         });
         self.auto_scroll = utils.flag(true);
 
-        var get_scrolling_element = u.once(function() {
+        var get_scrolling_element = function() {
             var original = window.scrollY;
             var test_target = 100;
             if(test_target == original) {
@@ -278,7 +278,7 @@ define(function(require) {
             }
             window.scrollTo(0, original); // restore
             return element;
-        });
+        };
 
         // auto scroll!
         self.current_section_element.subscribe(function(element) {
@@ -287,6 +287,7 @@ define(function(require) {
 
             function scroll_by(shift) {
                 var cont = get_scrolling_element();
+                if(!cont) { return; }
                 var target = cont.scrollTop + shift;
                 var duration = Math.abs(shift) * 3; // 3 seconds per 1000 pixels
                 duration = Math.min(duration, 600);
