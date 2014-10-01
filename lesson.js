@@ -217,6 +217,36 @@ define(function(require) {
                 lesson.insert_new_section(time);
             }
 
+            var dialog = require("plugins/dialog");
+            self.delete_section_confirmation = function() {
+                var section = self;
+                var Dialog = function LineDeleteConfirmationDialog() {
+                    var self = utils.create(LineDeleteConfirmationDialog);
+                    self.viewUrl = "section_delete_confirmation.html";
+                    self.confirm = function() {
+                        dialog.close(self, true);
+                    }
+                    self.cancel = function() {
+                        dialog.close(self, false);
+                    }
+
+                    return self;
+                }
+                var confirmation_dialog = Dialog();
+                dialog.show(confirmation_dialog).then(function(yes) {
+                    if(yes) {
+                        lesson.sections_list.remove(self);
+                        lesson.update_current_section();
+                        var undo_fn = function() {
+                            lesson.sections_list.insert(self);
+                        }
+                        // TODO: popup a notification with an undo link that runs the given callback!
+                    } else {
+                        // nothing
+                    }
+                });
+            }
+
             // Section.export_data
             self.export_data = function() {
                 var out = {};
@@ -248,9 +278,12 @@ define(function(require) {
         self.following_video = ko.computed(function() {
             return (self.follow_video_blockers().length === 0 && !self.video_paused()) || !self.current_section();
         });
+        self.update_current_section = function() {
+            self.current_section(self.find_video_section());
+        }
         ko.computed(function() {
             if(self.following_video()) {
-                self.current_section(self.find_video_section());
+                self.update_current_section();
             }
         });
 

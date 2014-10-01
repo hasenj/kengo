@@ -41,6 +41,11 @@
                     <button data-bind="click: lesson.use_prev_section, enable: lesson.prev_section"> &lt; Prev </button>
                     <button data-bind="click: lesson.use_next_section, enable: lesson.next_section">Next &gt; </button>
                 </div>
+                <!-- ko if: $parent.note_edit_mode.is_on -->
+                <div class="group">
+                    <button class="red" data-bind="click: delete_section_confirmation, enable: lesson.video_paused"> Delete Line </button>
+                </div>
+                <!-- /ko -->
             </div>
             <!-- /ko -->
         </div>
